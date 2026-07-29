@@ -1,0 +1,1669 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Geepay E-Commerce API",
+		"description": "Multi-tenant African marketplace API - v2\n\nImport Geepay-Ecom.postman_environment.json and select **Geepay Local**.\n\n**User types:** customer | merchant | system_admin\n**Merchant member roles:** owner > admin > manager > staff > viewer\n**Platform admin roles:** super_admin > operations > finance > support > viewer\n\n**Quick flows (use folder collections):**\n- Geepay - Merchant Onboard Flow\n- Geepay - Order and Payment Flow\n- Geepay - Customer Ledger Flow\n\n**Store typing:**\n- `store_type` — business vertical (BARBERSHOP, RESTAURANT, BOUTIQUE, …)\n- `store_category` — order workflow (auto-derived from store_type unless overridden)\n\nUSSD: *{ussd_code}*{order_number}*{total_major}#",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080/api/v1"
+		},
+		{
+			"key": "accessToken",
+			"value": ""
+		},
+		{
+			"key": "merchantId",
+			"value": ""
+		},
+		{
+			"key": "ownerId",
+			"value": "00000000-0000-0000-0000-000000000002"
+		},
+		{
+			"key": "customerId",
+			"value": "cef9b5a3-548e-49ae-97f5-324d6e0c64aa"
+		},
+		{
+			"key": "storeId",
+			"value": "00000000-0000-0000-0000-000000000010"
+		},
+		{
+			"key": "productId",
+			"value": "00000000-0000-0000-0000-000000000001"
+		},
+		{
+			"key": "variantId",
+			"value": ""
+		},
+		{
+			"key": "orderId",
+			"value": ""
+		},
+		{
+			"key": "orderNumber",
+			"value": ""
+		},
+		{
+			"key": "transactionId",
+			"value": ""
+		},
+		{
+			"key": "ussdPayload",
+			"value": ""
+		},
+		{
+			"key": "imageUrl",
+			"value": ""
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"description": "JWT login/register. GET /me returns memberships, documents, admin profile.",
+			"item": [
+				{
+					"name": "Login System Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Seeded super_admin. Required for Admin endpoints.",
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"admin@geepay.local\",\n  \"password\": \"AdminPass123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status OK', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"  var b = pm.response.json();",
+									"  if (b.access_token) {",
+									"    pm.environment.set('accessToken', b.access_token);",
+									"    pm.collectionVariables.set('accessToken', b.access_token);",
+									"  }",
+									"  var u = b.user || b;",
+									"  if (u && u.id) { pm.environment.set('userId', u.id); }",
+									"  if (b.merchant && b.merchant.id) { pm.environment.set('merchantId', b.merchant.id); }",
+									"  var ms = (u && u.merchant_memberships) || b.merchant_memberships || b.memberships;",
+									"  if (ms && ms[0] && ms[0].merchant_id) pm.environment.set('merchantId', ms[0].merchant_id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Login Merchant (seeded owner)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "Role: merchant. Mulenga Barbershop membership.",
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"owner@barber.co.zm\",\n  \"password\": \"OwnerPass123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status OK', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"  var b = pm.response.json();",
+									"  if (b.access_token) {",
+									"    pm.environment.set('accessToken', b.access_token);",
+									"    pm.collectionVariables.set('accessToken', b.access_token);",
+									"  }",
+									"  var u = b.user || b;",
+									"  if (u && u.id) { pm.environment.set('userId', u.id); }",
+									"  if (b.merchant && b.merchant.id) { pm.environment.set('merchantId', b.merchant.id); }",
+									"  var ms = (u && u.merchant_memberships) || b.merchant_memberships || b.memberships;",
+									"  if (ms && ms[0] && ms[0].merchant_id) pm.environment.set('merchantId', ms[0].merchant_id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Login Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"customer@example.com\",\n  \"password\": \"CustomerPass123!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status OK', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"  var b = pm.response.json();",
+									"  if (b.access_token) {",
+									"    pm.environment.set('accessToken', b.access_token);",
+									"    pm.collectionVariables.set('accessToken', b.access_token);",
+									"  }",
+									"  var u = b.user || b;",
+									"  if (u && u.id) { pm.environment.set('userId', u.id); }",
+									"  if (b.merchant && b.merchant.id) { pm.environment.set('merchantId', b.merchant.id); }",
+									"  var ms = (u && u.merchant_memberships) || b.merchant_memberships || b.memberships;",
+									"  if (ms && ms[0] && ms[0].merchant_id) pm.environment.set('merchantId', ms[0].merchant_id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Register Customer (JSON)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"customer.new@example.com\",\n  \"password\": \"CustomerPass123!\",\n  \"full_name\": \"John Banda\",\n  \"phone\": \"+260971234567\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status OK', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"  var b = pm.response.json();",
+									"  if (b.access_token) {",
+									"    pm.environment.set('accessToken', b.access_token);",
+									"    pm.collectionVariables.set('accessToken', b.access_token);",
+									"  }",
+									"  var u = b.user || b;",
+									"  if (u && u.id) { pm.environment.set('userId', u.id); }",
+									"  if (b.merchant && b.merchant.id) { pm.environment.set('merchantId', b.merchant.id); }",
+									"  var ms = (u && u.merchant_memberships) || b.merchant_memberships || b.memberships;",
+									"  if (ms && ms[0] && ms[0].merchant_id) pm.environment.set('merchantId', ms[0].merchant_id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Register Customer (multipart + docs)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/register/customer",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register",
+								"customer"
+							]
+						},
+						"description": "Uploads docs to MinIO/local storage. Use unique email.",
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "email",
+									"value": "kyc.customer@example.com",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "password",
+									"value": "CustomerPass123!",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "full_name",
+									"value": "Mary Phiri",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "phone",
+									"value": "+260971234579",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "national_id",
+									"type": "file",
+									"src": [],
+									"description": "PDF/JPG/PNG - optional"
+								},
+								{
+									"key": "selfie",
+									"type": "file",
+									"src": [],
+									"description": "Optional selfie"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status OK', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"  var b = pm.response.json();",
+									"  if (b.access_token) {",
+									"    pm.environment.set('accessToken', b.access_token);",
+									"    pm.collectionVariables.set('accessToken', b.access_token);",
+									"  }",
+									"  var u = b.user || b;",
+									"  if (u && u.id) { pm.environment.set('userId', u.id); }",
+									"  if (b.merchant && b.merchant.id) { pm.environment.set('merchantId', b.merchant.id); }",
+									"  var ms = (u && u.merchant_memberships) || b.merchant_memberships || b.memberships;",
+									"  if (ms && ms[0] && ms[0].merchant_id) pm.environment.set('merchantId', ms[0].merchant_id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Register Merchant (self-onboard)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/register/merchant",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register",
+								"merchant"
+							]
+						},
+						"description": "Creates merchant user + business + membership(owner) + KYC docs.",
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "email",
+									"value": "merchant.new@example.com",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "password",
+									"value": "MerchantPass123!",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "full_name",
+									"value": "Jane Biz Owner",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "phone",
+									"value": "+260970000001",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "business_type",
+									"value": "informal",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "legal_name",
+									"value": "Jane Trading",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "trading_name",
+									"value": "Jane Shop",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "country_code",
+									"value": "ZM",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "national_id",
+									"type": "file",
+									"src": [],
+									"description": "Owner ID document"
+								},
+								{
+									"key": "owner_id",
+									"type": "file",
+									"src": [],
+									"description": "KYC: owner_id verification type"
+								},
+								{
+									"key": "company_registration",
+									"type": "file",
+									"src": [],
+									"description": "Required for formal business_type"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Status OK', function () { pm.expect(pm.response.code).to.be.oneOf([200, 201]); });",
+									"if (pm.response.code === 200 || pm.response.code === 201) {",
+									"  var b = pm.response.json();",
+									"  if (b.access_token) {",
+									"    pm.environment.set('accessToken', b.access_token);",
+									"    pm.collectionVariables.set('accessToken', b.access_token);",
+									"  }",
+									"  var u = b.user || b;",
+									"  if (u && u.id) { pm.environment.set('userId', u.id); }",
+									"  if (b.merchant && b.merchant.id) { pm.environment.set('merchantId', b.merchant.id); }",
+									"  var ms = (u && u.merchant_memberships) || b.merchant_memberships || b.memberships;",
+									"  if (ms && ms[0] && ms[0].merchant_id) pm.environment.set('merchantId', ms[0].merchant_id);",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Current User (enriched)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/auth/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						},
+						"description": "Returns merchant_memberships, documents, admin_profile when applicable."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Merchants",
+			"description": "Requires merchant JWT. One user can belong to many businesses.",
+			"item": [
+				{
+					"name": "List My Memberships",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/merchants/memberships",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"merchants",
+								"memberships"
+							]
+						},
+						"description": "All businesses linked to the authenticated merchant user."
+					},
+					"response": []
+				},
+				{
+					"name": "Onboard Additional Business",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/merchants/onboard",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"merchants",
+								"onboard"
+							]
+						},
+						"description": "Logged-in merchant user registers another business entity.",
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "business_type",
+									"value": "informal",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "legal_name",
+									"value": "Second Branch Ltd",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "trading_name",
+									"value": "Branch Two",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "country_code",
+									"value": "ZM",
+									"type": "text",
+									"description": ""
+								},
+								{
+									"key": "owner_id",
+									"type": "file",
+									"src": [],
+									"description": "KYC document"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) pm.environment.set('merchantId', pm.response.json().id);"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"description": "Requires system_admin JWT with platform admin profile.",
+			"item": [
+				{
+					"name": "Create Store",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/stores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"stores"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"owner_id\": \"{{ownerId}}\",\n  \"name\": \"New Boutique\",\n  \"slug\": \"new-boutique-{{$timestamp}}\",\n  \"store_type\": \"BOUTIQUE\",\n  \"ussd_code\": \"115\",\n  \"currency\": \"ZMW\",\n  \"description\": \"Branch\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) pm.environment.set('storeId', pm.response.json().id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "List All Stores",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/admin/stores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"stores"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Create Platform Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/admin/admins",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"admin",
+								"admins"
+							]
+						},
+						"description": "Requires super_admin. Roles: super_admin | operations | finance | support | viewer",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"ops@geepay.local\",\n  \"password\": \"OpsPass123!\",\n  \"full_name\": \"Ops User\",\n  \"phone\": \"+260970000002\",\n  \"admin_role\": \"operations\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Merchant Owner",
+			"description": "Requires merchant JWT + store membership (manager+ to create).",
+			"item": [
+				{
+					"name": "List My Stores",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/owner/stores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"owner",
+								"stores"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Create Store / Branch",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/owner/stores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"owner",
+								"stores"
+							]
+						},
+						"description": "store_type selects business vertical; store_category is auto-derived (BARBERSHOP → ON_PREMISE_SERVICE).",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"merchant_id\": \"{{merchantId}}\",\n  \"name\": \"Mulenga Barbershop - Kabulonga\",\n  \"slug\": \"mulenga-kabulonga-{{$timestamp}}\",\n  \"branch_name\": \"Kabulonga\",\n  \"description\": \"New branch\",\n  \"store_type\": \"BARBERSHOP\",\n  \"ussd_code\": \"115\",\n  \"currency\": \"ZMW\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"  var s = pm.response.json();",
+									"  pm.environment.set('storeId', s.id);",
+									"  pm.test('store_type set', function () { pm.expect(s.store_type).to.eql('BARBERSHOP'); });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Store",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/owner/stores/{{storeId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"owner",
+								"stores",
+								"{{storeId}}"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Update Store",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/owner/stores/{{storeId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"owner",
+								"stores",
+								"{{storeId}}"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Mulenga Barbershop - Kabulonga\",\n  \"description\": \"Updated branch\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Upload Store Image",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/owner/stores/{{storeId}}/image",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"owner",
+								"stores",
+								"{{storeId}}",
+								"image"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "image",
+									"type": "file",
+									"src": [],
+									"description": "JPEG/PNG/WebP max 5MB"
+								}
+							]
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) pm.environment.set('imageUrl', pm.response.json().image_url);"
+								]
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Customer Storefront",
+			"description": "Public discovery. Filter by store_type (BARBERSHOP, RESTAURANT, BOUTIQUE, …).",
+			"item": [
+				{
+					"name": "List Store Types",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stores/types",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"types"
+							]
+						},
+						"description": "Catalog of business types with labels and default workflow category.",
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Stores",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Barbershops",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stores?store_type=BARBERSHOP",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores"
+							],
+							"query": [
+								{
+									"key": "store_type",
+									"value": "BARBERSHOP"
+								}
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Restaurants",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stores?store_type=RESTAURANT",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores"
+							],
+							"query": [
+								{
+									"key": "store_type",
+									"value": "RESTAURANT"
+								}
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Store",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"description": "Marketplace orders with fulfillment, tax, delivery fees, USSD payload.",
+			"item": [
+				{
+					"name": "Create Order (Self Pickup)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fulfillment_type\": \"self_pickup\",\n  \"payment_method\": \"mobile_money\",\n  \"customer_phone\": \"+260971234567\",\n  \"notes\": \"Walk-in\",\n  \"items\": [{ \"product_id\": \"{{productId}}\", \"quantity\": 1 }]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Order created', function () { pm.response.to.have.status(201); });",
+									"var b = pm.response.json();",
+									"if (b.order) {",
+									"  pm.environment.set('orderId', b.order.id);",
+									"  pm.environment.set('orderNumber', b.order.order_number);",
+									"}",
+									"if (b.ussd_payload) pm.environment.set('ussdPayload', b.ussd_payload);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Create Order (Authenticated Customer)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders"
+							]
+						},
+						"description": "Login Customer first - links order to customer_id for ledger.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fulfillment_type\": \"self_pickup\",\n  \"payment_method\": \"mobile_money\",\n  \"customer_phone\": \"+260971234567\",\n  \"items\": [{ \"product_id\": \"{{productId}}\", \"quantity\": 1 }]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Order created', function () { pm.response.to.have.status(201); });",
+									"var b = pm.response.json();",
+									"if (b.order) {",
+									"  pm.environment.set('orderId', b.order.id);",
+									"  pm.environment.set('orderNumber', b.order.order_number);",
+									"}",
+									"if (b.ussd_payload) pm.environment.set('ussdPayload', b.ussd_payload);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Create Order (Delivery)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fulfillment_type\": \"delivery\",\n  \"payment_method\": \"mobile_money\",\n  \"customer_phone\": \"+260971234567\",\n  \"delivery_address\": {\n    \"line1\": \"123 Cairo Road\",\n    \"city\": \"Lusaka\",\n    \"country\": \"ZM\"\n  },\n  \"delivery_latitude\": -15.3875,\n  \"delivery_longitude\": 28.3228,\n  \"items\": [{ \"product_id\": \"{{productId}}\", \"quantity\": 1 }]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Submit Checkout (alias)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/checkout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"checkout"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "noauth"
+						},
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"fulfillment_type\": \"self_pickup\",\n  \"payment_method\": \"mobile_money\",\n  \"items\": [{ \"product_id\": \"{{productId}}\", \"quantity\": 1 }]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Order created', function () { pm.response.to.have.status(201); });",
+									"var b = pm.response.json();",
+									"if (b.order) {",
+									"  pm.environment.set('orderId', b.order.id);",
+									"  pm.environment.set('orderNumber', b.order.order_number);",
+									"}",
+									"if (b.ussd_payload) pm.environment.set('ussdPayload', b.ussd_payload);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Payment QR",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders/{{orderId}}/payment-qr",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders",
+								"{{orderId}}",
+								"payment-qr"
+							]
+						},
+						"description": "",
+						"auth": {
+							"type": "noauth"
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Order Status",
+			"description": "Category-aware workflow. Login Merchant first. BARBERSHOP: paid → scheduled → in_service → completed",
+			"item": [
+				{
+					"name": "Mark Paid",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders/{{orderId}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders",
+								"{{orderId}}",
+								"status"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\"status\":\"paid\",\"notes\":\"Payment confirmed\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Scheduled (On-Premise)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders/{{orderId}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders",
+								"{{orderId}}",
+								"status"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\"status\":\"scheduled\",\"notes\":\"Chair 2 at 3pm\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "In Service (On-Premise)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders/{{orderId}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders",
+								"{{orderId}}",
+								"status"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\"status\":\"in_service\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Preparing (Food)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders/{{orderId}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders",
+								"{{orderId}}",
+								"status"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\"status\":\"preparing\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Dispatched (Food/On-Site)",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders/{{orderId}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders",
+								"{{orderId}}",
+								"status"
+							]
+						},
+						"description": "Auto-generates dispatch_payload JSON.",
+						"body": {
+							"mode": "raw",
+							"raw": "{\"status\":\"dispatched\",\"notes\":\"Rider assigned\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Completed",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders/{{orderId}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders",
+								"{{orderId}}",
+								"status"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\"status\":\"completed\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancelled",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/stores/{{storeId}}/orders/{{orderId}}/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"stores",
+								"{{storeId}}",
+								"orders",
+								"{{orderId}}",
+								"status"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\"status\":\"cancelled\",\"notes\":\"Customer no-show\"}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Customer Ledger",
+			"description": "Requires customer JWT.",
+			"item": [
+				{
+					"name": "Get Purchase History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/customers/me/history?limit=20&offset=0",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"customers",
+								"me",
+								"history"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "20"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order Detail",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/customers/me/orders/{{orderId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"customers",
+								"me",
+								"orders",
+								"{{orderId}}"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "List Order Transactions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/customers/me/orders/{{orderId}}/transactions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"customers",
+								"me",
+								"orders",
+								"{{orderId}}",
+								"transactions"
+							]
+						},
+						"description": ""
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) { var t = pm.response.json().transactions; if (t && t[0]) pm.environment.set('transactionId', t[0].id); }"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Record Payment",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/customers/me/orders/{{orderId}}/payments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"customers",
+								"me",
+								"orders",
+								"{{orderId}}",
+								"payments"
+							]
+						},
+						"description": "",
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"payment_method\": \"mobile_money\",\n  \"amount\": \"100.00\",\n  \"external_reference\": \"MPESA-ABC123\",\n  \"status\": \"success\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						}
+					},
+					"response": [],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) pm.environment.set('transactionId', pm.response.json().id);"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Transaction",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/customers/me/transactions/{{transactionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"customers",
+								"me",
+								"transactions",
+								"{{transactionId}}"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
