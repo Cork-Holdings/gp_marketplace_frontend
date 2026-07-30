@@ -1,6 +1,7 @@
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/context/useAuth';
-import { CreateStoreForm, StoreListAdmin } from '../dashboard/AdminPanels';
+import { StoreListAdmin } from '../dashboard/AdminPanels';
+import { Button } from '@/components/ui/button';
 
 export default function AdminStoresPage() {
   const { isAdmin } = useAuth();
@@ -8,19 +9,19 @@ export default function AdminStoresPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-charcoal">All Stores</h1>
-        <p className="mt-1 text-sm text-forest-muted">
-          Manage marketplace storefronts attached to merchant businesses.
-        </p>
-      </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <CreateStoreForm />
+      <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h2 className="mb-3 font-semibold text-charcoal">Platform Stores</h2>
-          <StoreListAdmin />
+          <h1 className="text-2xl font-bold tracking-tight text-charcoal">All Stores</h1>
+          <p className="mt-1 text-sm text-forest-muted">
+            Manage marketplace storefronts attached to merchant businesses.
+          </p>
         </div>
-      </div>
+        <Button asChild>
+          <Link to="/portal/admin/stores/new">+ Add store</Link>
+        </Button>
+      </header>
+
+      <StoreListAdmin />
     </div>
   );
 }

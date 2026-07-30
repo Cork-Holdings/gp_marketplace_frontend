@@ -79,22 +79,33 @@ function IconBtn({
   onClick,
   children,
   danger = false,
+  accent = false,
+  size = 'md',
 }: {
   label: string;
   onClick: () => void;
   children: ReactNode;
   danger?: boolean;
+  accent?: boolean;
+  size?: 'sm' | 'md';
 }) {
   return (
     <button
       type="button"
       title={label}
       aria-label={label}
-      onClick={onClick}
-      className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition active:scale-[0.97] ${
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      className={`inline-flex items-center justify-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest/35 active:scale-[0.96] ${
+        size === 'sm' ? 'h-7 w-7' : 'h-8 w-8'
+      } ${
         danger
-          ? 'text-forest-muted/60 hover:bg-red-50 hover:text-red-600'
-          : 'text-forest-muted/60 hover:bg-sage-light hover:text-forest'
+          ? 'text-forest-muted/55 hover:bg-red-50 hover:text-red-600'
+          : accent
+            ? 'text-amber-700 hover:bg-amber-50'
+            : 'text-forest-muted/55 hover:bg-sage-light hover:text-forest'
       }`}
     >
       {children}
@@ -126,29 +137,40 @@ function FilterChip({
   );
 }
 
-function ItemImage({ product, className = '' }: { product: Product; className?: string }) {
+function ItemImage({
+  product,
+  className = '',
+  showEightySixBadge = false,
+}: {
+  product: Product;
+  className?: string;
+  showEightySixBadge?: boolean;
+}) {
   const available = product.is_active !== false;
-  if (product.image_url) {
-    return (
-      <div className={`relative overflow-hidden bg-sage-light ${className} ${!available ? 'opacity-50' : ''}`}>
+  const initial = (product.name?.[0] ?? '?').toUpperCase();
+
+  return (
+    <div
+      className={`relative overflow-hidden bg-sage-light ${className} ${!available ? 'opacity-60' : ''}`}
+    >
+      {product.image_url ? (
         <img
           src={product.image_url}
           alt=""
           loading="lazy"
           decoding="async"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
         />
-      </div>
-    );
-  }
-
-  const initial = (product.name?.[0] ?? '?').toUpperCase();
-  return (
-    <div
-      className={`relative flex items-center justify-center bg-sage-light ${className} ${!available ? 'opacity-50' : ''}`}
-      aria-hidden="true"
-    >
-      <span className="text-lg font-semibold text-forest-muted/40">{initial}</span>
+      ) : (
+        <div className="flex h-full w-full items-center justify-center" aria-hidden="true">
+          <span className="text-base font-semibold tracking-tight text-forest-muted/35">{initial}</span>
+        </div>
+      )}
+      {showEightySixBadge && !available && (
+        <span className="absolute inset-x-0 bottom-0 bg-amber-600/95 px-1.5 py-0.5 text-center text-[9px] font-semibold uppercase tracking-wider text-white">
+          86&apos;d
+        </span>
+      )}
     </div>
   );
 }
@@ -159,28 +181,32 @@ function ItemActions({
   onAddons,
   onToggleActive,
   onDelete,
+  size = 'md',
 }: {
   available: boolean;
   onEdit: () => void;
   onAddons: () => void;
   onToggleActive: () => void;
   onDelete: () => void;
+  size?: 'sm' | 'md';
 }) {
   return (
     <div className="flex items-center gap-0.5">
-      <IconBtn label="Edit item" onClick={onEdit}>
+      <IconBtn label="Edit item" onClick={onEdit} size={size}>
         {Icons.edit}
       </IconBtn>
-      <IconBtn label="Manage add-ons" onClick={onAddons}>
+      <IconBtn label="Manage add-ons" onClick={onAddons} size={size}>
         {Icons.addons}
       </IconBtn>
       <IconBtn
         label={available ? 'Mark unavailable (86)' : 'Make available'}
         onClick={onToggleActive}
+        accent={!available}
+        size={size}
       >
         {available ? Icons.eyeOff : Icons.eye}
       </IconBtn>
-      <IconBtn label="Delete item" onClick={onDelete} danger>
+      <IconBtn label="Delete item" onClick={onDelete} danger size={size}>
         {Icons.trash}
       </IconBtn>
     </div>
@@ -190,6 +216,7 @@ function ItemActions({
 function MenuItemCard({
   product,
   categoryName,
+  showCategory = true,
   onEdit,
   onAddons,
   onToggleActive,
@@ -197,52 +224,98 @@ function MenuItemCard({
 }: {
   product: Product;
   categoryName?: string;
+  showCategory?: boolean;
   onEdit: () => void;
   onAddons: () => void;
   onToggleActive: () => void;
   onDelete: () => void;
 }) {
   const available = product.is_active !== false;
+  const meta = showCategory ? categoryName || 'No category' : null;
 
   return (
     <article
-      className={`group flex flex-col overflow-hidden rounded-xl bg-white ring-1 ring-cream-dark transition hover:ring-forest/15 ${
-        !available ? 'opacity-80' : ''
+      className={`group relative flex flex-col overflow-hidden rounded-xl bg-white ring-1 transition ${
+        available
+          ? 'ring-cream-dark hover:ring-forest/20 hover:shadow-[0_8px_24px_-12px_rgba(8,12,48,0.18)]'
+          : 'bg-amber-50/35 ring-amber-200/80'
       }`}
     >
-      <ItemImage product={product} className="aspect-[5/4] w-full" />
-      <div className="flex flex-1 flex-col gap-1.5 p-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <h3 className="truncate text-sm font-medium text-charcoal">{product.name}</h3>
-            {categoryName ? (
-              <p className="mt-0.5 truncate text-xs text-forest-muted">{categoryName}</p>
-            ) : (
-              <p className="mt-0.5 text-xs text-forest-muted">No category</p>
-            )}
+      <span
+        aria-hidden="true"
+        className={`absolute inset-y-0 left-0 w-0.5 transition ${
+          available ? 'bg-transparent group-hover:bg-forest/35' : 'bg-amber-500'
+        }`}
+      />
+
+      <div className="relative flex min-h-[5.25rem] flex-1">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="flex min-w-0 flex-1 items-center gap-3 p-2.5 pl-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest/30"
+          aria-label={`Edit ${product.name}`}
+        >
+          <ItemImage
+            product={product}
+            showEightySixBadge
+            className="h-16 w-16 shrink-0 rounded-lg sm:h-[4.25rem] sm:w-[4.25rem]"
+          />
+
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 className="truncate text-[13px] font-semibold leading-tight tracking-tight text-charcoal">
+                {product.name}
+              </h3>
+              <p className="shrink-0 text-[13px] font-semibold tabular-nums text-forest">
+                {formatCurrency(product.price)}
+              </p>
+            </div>
+
+            <div className="flex min-w-0 items-center gap-1.5">
+              {meta && <span className="truncate text-[11px] text-forest-muted">{meta}</span>}
+              {!available && (
+                <span className="inline-flex shrink-0 items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                  Off menu
+                </span>
+              )}
+              {available && product.description && (
+                <span
+                  className={`truncate text-[11px] text-forest-muted/65 ${meta ? 'before:mr-1.5 before:content-["·"]' : ''}`}
+                >
+                  {product.description}
+                </span>
+              )}
+            </div>
           </div>
-          <p className="shrink-0 text-sm font-medium tabular-nums text-charcoal">
-            {formatCurrency(product.price)}
-          </p>
-        </div>
+        </button>
 
-        {product.description && (
-          <p className="line-clamp-2 text-xs leading-relaxed text-forest-muted/80">{product.description}</p>
-        )}
-
-        {!available && (
-          <p className="text-[11px] font-medium text-forest-muted">Not on menu</p>
-        )}
-
-        <div className="mt-1 flex justify-end opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+        {/* Desktop: hover/focus action chip */}
+        <div
+          className={`absolute bottom-1.5 right-1.5 z-10 hidden items-center rounded-lg bg-white/95 px-0.5 py-0.5 shadow-sm ring-1 ring-cream-dark/80 backdrop-blur-sm transition sm:flex sm:pointer-events-none sm:opacity-0 sm:group-hover:pointer-events-auto sm:group-hover:opacity-100 sm:group-focus-within:pointer-events-auto sm:group-focus-within:opacity-100 ${
+            !available ? 'sm:pointer-events-auto sm:opacity-100' : ''
+          }`}
+        >
           <ItemActions
             available={available}
             onEdit={onEdit}
             onAddons={onAddons}
             onToggleActive={onToggleActive}
             onDelete={onDelete}
+            size="sm"
           />
         </div>
+      </div>
+
+      {/* Mobile: always-visible action strip */}
+      <div className="flex items-center justify-end border-t border-cream-dark/60 bg-sage-light/20 px-1.5 py-1 sm:hidden">
+        <ItemActions
+          available={available}
+          onEdit={onEdit}
+          onAddons={onAddons}
+          onToggleActive={onToggleActive}
+          onDelete={onDelete}
+          size="sm"
+        />
       </div>
     </article>
   );
@@ -266,27 +339,44 @@ function MenuItemRow({
   const available = product.is_active !== false;
 
   return (
-    <tr className="group border-b border-cream-dark/60 last:border-0 hover:bg-sage-light/40">
-      <td className="px-3 py-3">
-        <div className="flex items-center gap-3">
-          <ItemImage product={product} className="h-10 w-10 shrink-0 rounded-lg" />
+    <tr
+      className={`group border-b border-cream-dark/60 last:border-0 hover:bg-sage-light/40 ${
+        !available ? 'bg-amber-50/40' : ''
+      }`}
+    >
+      <td className="px-3 py-2.5">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="flex w-full items-center gap-3 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest/30"
+          aria-label={`Edit ${product.name}`}
+        >
+          <ItemImage product={product} showEightySixBadge className="h-11 w-11 shrink-0 rounded-lg" />
           <div className="min-w-0">
-            <p className="font-medium text-charcoal">{product.name}</p>
+            <p className="truncate text-sm font-semibold tracking-tight text-charcoal">{product.name}</p>
             {product.description && (
               <p className="mt-0.5 line-clamp-1 text-xs text-forest-muted">{product.description}</p>
             )}
           </div>
-        </div>
+        </button>
       </td>
-      <td className="hidden px-3 py-3 text-sm text-forest-muted sm:table-cell">
+      <td className="hidden px-3 py-2.5 text-sm text-forest-muted sm:table-cell">
         {categoryName ?? 'No category'}
       </td>
-      <td className="px-3 py-3 text-sm tabular-nums text-charcoal">{formatCurrency(product.price)}</td>
-      <td className="hidden px-3 py-3 text-sm text-forest-muted md:table-cell">
-        {available ? 'On menu' : 'Off menu'}
+      <td className="px-3 py-2.5 text-sm font-medium tabular-nums text-forest">
+        {formatCurrency(product.price)}
       </td>
-      <td className="px-3 py-3">
-        <div className="flex justify-end opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
+      <td className="hidden px-3 py-2.5 md:table-cell">
+        {available ? (
+          <span className="text-sm text-forest-muted">On menu</span>
+        ) : (
+          <span className="inline-flex items-center rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+            Off menu
+          </span>
+        )}
+      </td>
+      <td className="px-3 py-2.5">
+        <div className="flex justify-end opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           <ItemActions
             available={available}
             onEdit={onEdit}
@@ -373,17 +463,21 @@ export function MenuItemsView({
   const hasActiveFilters =
     Boolean(search.trim()) || categoryFilter !== 'all' || availabilityFilter !== 'all';
 
-  const renderCard = (p: Product) => (
+  const renderCard = (p: Product, opts?: { showCategory?: boolean }) => (
     <MenuItemCard
       key={p.id}
       product={p}
       categoryName={p.menu_category_id ? categoryNameById[p.menu_category_id] : undefined}
+      showCategory={opts?.showCategory ?? true}
       onEdit={() => onEdit(p)}
       onAddons={() => onAddons(p)}
       onToggleActive={() => onToggleActive(p)}
       onDelete={() => onDelete(p)}
     />
   );
+
+  const cardGridClass =
+    'grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4';
 
   return (
     <div className="space-y-5">
@@ -543,26 +637,26 @@ export function MenuItemsView({
           </div>
         </div>
       ) : grouped && categoryFilter === 'all' ? (
-        <div className="space-y-8">
+        <div className="space-y-7">
           {categories.map((c) => {
             const items = grouped.byCat[c.id] ?? [];
             if (!items.length) return null;
             return (
               <section key={c.id}>
-                <div className="mb-4 flex items-baseline gap-2">
-                  <h2 className="text-sm font-semibold text-charcoal">{c.name}</h2>
-                  <span className="text-xs text-forest-muted">{items.length}</span>
+                <div className="mb-3 flex items-baseline gap-2">
+                  <h2 className="text-sm font-semibold tracking-tight text-charcoal">{c.name}</h2>
+                  <span className="text-xs tabular-nums text-forest-muted">{items.length}</span>
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                  {items.map(renderCard)}
+                <div className={cardGridClass}>
+                  {items.map((p) => renderCard(p, { showCategory: false }))}
                 </div>
               </section>
             );
           })}
           {grouped.unassigned.length > 0 && (
             <section>
-              <div className="mb-4 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <h2 className="text-sm font-semibold text-charcoal">Unassigned</h2>
+              <div className="mb-3 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <h2 className="text-sm font-semibold tracking-tight text-charcoal">Unassigned</h2>
                 <span className="text-xs text-forest-muted">
                   {grouped.unassigned.length} items. Assign in{' '}
                   <Link to="/portal/owner/menu" className="font-medium text-forest hover:underline">
@@ -570,15 +664,15 @@ export function MenuItemsView({
                   </Link>
                 </span>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {grouped.unassigned.map(renderCard)}
+              <div className={cardGridClass}>
+                {grouped.unassigned.map((p) => renderCard(p, { showCategory: false }))}
               </div>
             </section>
           )}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map(renderCard)}
+        <div className={cardGridClass}>
+          {filtered.map((p) => renderCard(p))}
         </div>
       )}
 

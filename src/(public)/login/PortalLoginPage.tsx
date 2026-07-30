@@ -93,7 +93,6 @@ export default function PortalLoginPage() {
   const [mode, setMode] = useState<'owner' | 'employee'>('owner');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [merchantId, setMerchantId] = useState('');
   const [employeeNumber, setEmployeeNumber] = useState('');
   const [pin, setPin] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -110,7 +109,6 @@ export default function PortalLoginPage() {
     try {
       if (mode === 'employee') {
         await employeeLogin({
-          merchant_id: merchantId.trim() || undefined,
           employee_number: employeeNumber.trim(),
           pin,
         });
@@ -154,7 +152,9 @@ export default function PortalLoginPage() {
                 Welcome back to Geepay!
               </h1>
               <p className="mt-2 text-sm text-forest-muted">
-                Sign in to manage your store, products, and orders.
+                {mode === 'employee'
+                  ? 'Enter your employee ID and PIN — no business code needed.'
+                  : 'Sign in to manage your store, products, and orders.'}
               </p>
             </div>
 
@@ -207,19 +207,6 @@ export default function PortalLoginPage() {
               ) : (
                 <>
                   <div>
-                    <label htmlFor="merchantId" className="mb-1.5 block text-sm font-medium text-charcoal">
-                      Business ID
-                    </label>
-                    <input
-                      id="merchantId"
-                      required
-                      placeholder="Your merchant UUID"
-                      value={merchantId}
-                      onChange={(e) => setMerchantId(e.target.value)}
-                      className="w-full rounded-xl border border-cream-dark bg-white px-4 py-3 text-sm font-mono text-charcoal focus:border-forest/40 focus:outline-none focus:ring-2 focus:ring-forest/15"
-                    />
-                  </div>
-                  <div>
                     <label htmlFor="employeeNumber" className="mb-1.5 block text-sm font-medium text-charcoal">
                       Employee ID
                     </label>
@@ -231,8 +218,8 @@ export default function PortalLoginPage() {
                       maxLength={6}
                       placeholder="123456"
                       value={employeeNumber}
-                      onChange={(e) => setEmployeeNumber(e.target.value)}
-                      className="w-full rounded-xl border border-cream-dark bg-white px-4 py-3 text-sm font-mono text-charcoal focus:border-forest/40 focus:outline-none focus:ring-2 focus:ring-forest/15"
+                      onChange={(e) => setEmployeeNumber(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full rounded-xl border border-cream-dark bg-white px-4 py-3 text-sm font-mono tracking-widest text-charcoal focus:border-forest/40 focus:outline-none focus:ring-2 focus:ring-forest/15"
                     />
                   </div>
                   <div>
@@ -248,8 +235,8 @@ export default function PortalLoginPage() {
                       maxLength={6}
                       autoComplete="off"
                       value={pin}
-                      onChange={(e) => setPin(e.target.value)}
-                      className="w-full rounded-xl border border-cream-dark bg-white px-4 py-3 text-sm font-mono text-charcoal focus:border-forest/40 focus:outline-none focus:ring-2 focus:ring-forest/15"
+                      onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full rounded-xl border border-cream-dark bg-white px-4 py-3 text-sm font-mono tracking-widest text-charcoal focus:border-forest/40 focus:outline-none focus:ring-2 focus:ring-forest/15"
                     />
                   </div>
                 </>
@@ -283,7 +270,7 @@ export default function PortalLoginPage() {
                 </Link>
                   </>
                 ) : (
-                  <>Ask your manager for your 6-digit employee ID and PIN.</>
+                  <>Sign in with your 6-digit employee ID and PIN.</>
                 )}
               </p>
             </form>

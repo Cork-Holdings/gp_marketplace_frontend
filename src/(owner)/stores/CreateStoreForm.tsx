@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { ownerApi, storefrontApi } from '@/lib/api/services';
+import { adminApi, ownerApi, storefrontApi } from '@/lib/api/services';
 import { slugify } from '@/lib/multipart';
 import { DEFAULT_CURRENCY } from '@/lib/locale';
 import { CURRENCY_OPTIONS } from '@/components/onboarding/onboardingConfig';
@@ -16,6 +16,12 @@ import {
   canCreateStore,
 } from '@/lib/storeConfig';
 import type { ReactNode } from 'react';
+
+type MerchantOption = {
+  id: string;
+  label: string;
+  owner_id?: string;
+};
 
 const STEPS = [
   { id: 'identity', label: 'Store identity' },
@@ -226,9 +232,24 @@ function StoreTypeCards({
   );
 }
 
-export function CreateStoreForm({ onSuccess, compact = false }) {
+export function CreateStoreForm({
+  onSuccess,
+  compact = false,
+  adminMode = false,
+  cancelTo,
+}: {
+  onSuccess?: (store: { id?: string } | null) => void;
+  compact?: boolean;
+  /** Platform-admin flow: merchant picker + admin create API. */
+  adminMode?: boolean;
+  cancelTo?: string;
+}) {
   const { memberships, refreshStores, memberRole } = useMarketplace();
   const { data: typesData } = useAsync(() => storefrontApi.listStoreTypes().catch(() => null), []);
+  const { data: merchantsData, loading: merchantsLoading } = useAsync(
+    () => (adminMode ? adminApi.listMerchants().catch(() => null) : Promise.resolve(null)),
+    [adminMode],
+  );
   const storeTypes = normalizeStoreTypes(typesData).length
     ? normalizeStoreTypes(typesData)
     : FALLBACK_STORE_TYPES;
@@ -240,7 +261,25 @@ export function CreateStoreForm({ onSuccess, compact = false }) {
   const [error, setError] = useState<unknown>(null);
 
   const eligibleMemberships = memberships.filter((m) => canCreateStore(m.role));
+  const adminMerchants: MerchantOption[] = useMemo(() => {
+    const list = merchantsData?.merchants ?? merchantsData ?? [];
+    if (!Array.isArray(list)) return [];
+    return list.map((m: { id: string; trading_name?: string | null; legal_name?: string; owner_id?: string }) => ({
+      id: m.id,
+      label: m.trading_name?.trim() || m.legal_name || m.id,
+      owner_id: m.owner_id,
+    }));
+  }, [merchantsData]);
+
+  const merchantOptions: MerchantOption[] = adminMode
+    ? adminMerchants
+    : eligibleMemberships.map((m) => ({
+        id: m.merchant_id,
+        label: m.trading_name ?? m.legal_name ?? m.merchant_id,
+      }));
+
   const currentStep = STEPS[stepIndex]?.id ?? STEPS[0].id;
+  const backPath = cancelTo ?? (adminMode ? '/portal/admin/stores' : '/portal/owner/stores');
 
   const imagePreview = useMemo(() => {
     if (!imageFile) return null;
@@ -253,12 +292,19 @@ export function CreateStoreForm({ onSuccess, compact = false }) {
   }, [imageFile, imagePreview]);
 
   useEffect(() => {
+    if (adminMode) {
+      const defaultMerchant = adminMerchants[0]?.id ?? '';
+      if (defaultMerchant && !form.merchant_id) {
+        setForm((f) => ({ ...f, merchant_id: defaultMerchant }));
+      }
+      return;
+    }
     const defaultMerchant =
       eligibleMemberships[0]?.merchant_id ?? memberships[0]?.merchant_id ?? '';
     if (defaultMerchant && !form.merchant_id) {
       setForm((f) => ({ ...f, merchant_id: defaultMerchant }));
     }
-  }, [memberships, eligibleMemberships, form.merchant_id]);
+  }, [adminMode, adminMerchants, memberships, eligibleMemberships, form.merchant_id]);
 
   const setField = (key: keyof typeof INITIAL_FORM) => (value: string) => {
     setForm((f) => {
@@ -275,14 +321,12 @@ export function CreateStoreForm({ onSuccess, compact = false }) {
     setError(null);
   };
 
-  const selectedBusiness =
-    eligibleMemberships.find((m) => m.merchant_id === form.merchant_id)?.trading_name ??
-    eligibleMemberships.find((m) => m.merchant_id === form.merchant_id)?.legal_name;
+  const selectedBusiness = merchantOptions.find((m) => m.id === form.merchant_id)?.label;
 
   const canAdvance = useMemo(() => {
     switch (currentStep) {
       case 'identity':
-        return Boolean(form.name.trim() && form.slug.trim());
+        return Boolean(form.merchant_id.trim() && form.name.trim() && form.slug.trim());
       case 'type':
         return Boolean(form.store_type);
       case 'setup':
@@ -319,12 +363,21 @@ export function CreateStoreForm({ onSuccess, compact = false }) {
         ussd_code: form.ussd_code.trim(),
         currency: form.currency,
       };
-      const store = await ownerApi.createStore(payload);
-      if (imageFile && store?.id) {
-        await ownerApi.uploadStoreImage(store.id, imageFile, 'logo').catch(() => null);
-        await ownerApi.uploadStoreImage(store.id, imageFile, 'card').catch(() => null);
+      let store;
+      if (adminMode) {
+        const selected = adminMerchants.find((m) => m.id === form.merchant_id);
+        store = await adminApi.createStore({
+          ...payload,
+          ...(selected?.owner_id ? { owner_id: selected.owner_id } : {}),
+        });
+      } else {
+        store = await ownerApi.createStore(payload);
+        if (imageFile && store?.id) {
+          await ownerApi.uploadStoreImage(store.id, imageFile, 'logo').catch(() => null);
+          await ownerApi.uploadStoreImage(store.id, imageFile, 'card').catch(() => null);
+        }
+        await refreshStores();
       }
-      await refreshStores();
       setForm(INITIAL_FORM);
       setImageFile(null);
       setStepIndex(0);
@@ -336,13 +389,27 @@ export function CreateStoreForm({ onSuccess, compact = false }) {
     }
   };
 
-  if (!canCreateStore(memberRole) && memberships.length > 0) {
+  if (!adminMode && !canCreateStore(memberRole) && memberships.length > 0) {
     return (
       <div className="rounded-2xl border border-cream-dark bg-cream/40 p-6 text-center">
         <p className="text-sm font-medium text-charcoal">Insufficient permissions</p>
         <p className="mt-1 text-sm text-forest-muted">
           Your role ({memberRole ?? 'viewer'}) cannot create stores. Ask your business owner for manager access.
         </p>
+      </div>
+    );
+  }
+
+  if (adminMode && !merchantsLoading && adminMerchants.length === 0) {
+    return (
+      <div className="rounded-2xl border border-cream-dark bg-cream/40 p-6 text-center">
+        <p className="text-sm font-medium text-charcoal">No merchants yet</p>
+        <p className="mt-1 text-sm text-forest-muted">
+          Onboard a merchant business before creating a storefront.
+        </p>
+        <Button asChild className="mt-4">
+          <Link to="/portal/admin/merchants/new">Onboard merchant</Link>
+        </Button>
       </div>
     );
   }
@@ -386,16 +453,16 @@ export function CreateStoreForm({ onSuccess, compact = false }) {
               </p>
             </div>
 
-            {eligibleMemberships.length > 1 && (
+            {(adminMode || eligibleMemberships.length > 1) && (
               <SelectField
-                label="Business"
+                label={adminMode ? 'Merchant business' : 'Business'}
                 id="merchant_id"
                 required
                 value={form.merchant_id}
                 onChange={setField('merchant_id')}
-                options={eligibleMemberships.map((m) => ({
-                  value: m.merchant_id,
-                  label: m.trading_name ?? m.legal_name ?? m.merchant_id,
+                options={merchantOptions.map((m) => ({
+                  value: m.id,
+                  label: m.label,
                 }))}
               />
             )}
@@ -495,15 +562,17 @@ export function CreateStoreForm({ onSuccess, compact = false }) {
               <p className="mt-1 text-xs text-forest-muted">Shown in your About section on the storefront.</p>
             </div>
 
-            <FileUploadField
-              id="store_image"
-              label="Logo / cover image"
-              optional
-              accept="image/jpeg,image/png,image/webp"
-              hint="JPEG, PNG or WebP · max 5 MB"
-              value={imageFile}
-              onChange={setImageFile}
-            />
+            {!adminMode && (
+              <FileUploadField
+                id="store_image"
+                label="Logo / cover image"
+                optional
+                accept="image/jpeg,image/png,image/webp"
+                hint="JPEG, PNG or WebP · max 5 MB"
+                value={imageFile}
+                onChange={setImageFile}
+              />
+            )}
           </div>
         );
 
@@ -518,9 +587,7 @@ export function CreateStoreForm({ onSuccess, compact = false }) {
             </div>
 
             <div className="rounded-2xl border border-cream-dark bg-cream/30 px-4 py-1">
-              {eligibleMemberships.length > 1 && (
-                <ReviewRow label="Business" value={selectedBusiness ?? form.merchant_id} />
-              )}
+              <ReviewRow label="Business" value={selectedBusiness ?? form.merchant_id} />
               <ReviewRow label="Store name" value={form.name} />
               <ReviewRow label="Branch" value={form.branch_name || form.name} />
               <ReviewRow label="Slug" value={form.slug} />
@@ -531,11 +598,26 @@ export function CreateStoreForm({ onSuccess, compact = false }) {
               <ReviewRow label="USSD" value={form.ussd_code} />
               <ReviewRow label="Currency" value={form.currency} />
               <ReviewRow label="Description" value={form.description || 'None yet'} />
-              <ReviewRow label="Logo" value={imageFile ? imageFile.name : 'Skipped — add later in Branding'} />
+              {!adminMode && (
+                <ReviewRow
+                  label="Logo"
+                  value={imageFile ? imageFile.name : 'Skipped — add later in Branding'}
+                />
+              )}
             </div>
 
             <p className="rounded-xl border border-sky/20 bg-info-light/50 px-4 py-3 text-xs leading-relaxed text-info-fg">
-              After launch, head to <strong>Branding</strong> to upload hero slides, set your brand color, and edit page copy.
+              {adminMode ? (
+                <>
+                  After launch, the merchant can open <strong>Branding</strong> to upload hero slides, set brand
+                  color, and edit page copy.
+                </>
+              ) : (
+                <>
+                  After launch, head to <strong>Branding</strong> to upload hero slides, set your brand color, and
+                  edit page copy.
+                </>
+              )}
             </p>
           </div>
         );
@@ -578,7 +660,7 @@ export function CreateStoreForm({ onSuccess, compact = false }) {
         </div>
 
         <p className="mt-4 text-center text-xs text-forest-muted">
-          <Link to="/portal/owner/stores" className="font-medium text-forest hover:underline">
+          <Link to={backPath} className="font-medium text-forest hover:underline">
             Cancel and go back
           </Link>
         </p>

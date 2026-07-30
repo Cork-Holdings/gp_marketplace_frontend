@@ -98,10 +98,11 @@ function PlatformSummaryCard({ overview }) {
         <div>
           <p className="text-sm text-forest-muted">Platform snapshot</p>
           <p className="mt-1 text-[1.65rem] font-bold leading-tight text-charcoal md:text-3xl">
-            {overview.orderTotalLabel}
+            {/* {overview.orderTotalLabel} */}
+            -
           </p>
           <p className="mt-1 text-xs text-forest-muted">
-            Sum of the latest {overview.recentOrderCount} orders (analytics API not yet available)
+            Sum of the latest {/*overview.recentOrderCount*/} orders 
           </p>
         </div>
       </div>

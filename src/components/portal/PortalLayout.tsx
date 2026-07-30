@@ -328,7 +328,7 @@ function SidebarBrand({ brandSubtitle, collapsed }: { brandSubtitle: string; col
   return (
     <div
       className={cn(
-        'flex border-b border-white/10 p-4 transition-all duration-300 ease-out motion-reduce:transition-none',
+        'flex shrink-0 border-b border-white/10 p-4 transition-all duration-300 ease-out motion-reduce:transition-none',
         collapsed ? 'flex-col items-center gap-2' : 'flex-col items-start gap-1.5',
       )}
     >
@@ -339,7 +339,6 @@ function SidebarBrand({ brandSubtitle, collapsed }: { brandSubtitle: string; col
           collapsed ? 'max-h-0 opacity-0' : 'max-h-12 opacity-100 delay-75',
         )}
       >
-        <p className="text-sm font-bold text-white">Geepay</p>
         <p className="text-[10px] text-white/70">{brandSubtitle}</p>
       </div>
     </div>
@@ -348,7 +347,10 @@ function SidebarBrand({ brandSubtitle, collapsed }: { brandSubtitle: string; col
 
 function SidebarNavLinks({ items, collapsed }: { items: NavItem[]; collapsed: boolean }) {
   return (
-    <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden p-3 scrollbar-hide" aria-label="Primary">
+    <nav
+      className="sidebar-nav-scroll flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden overscroll-contain p-3"
+      aria-label="Primary"
+    >
       {items.map((item, index) => (
         <div key={item.to} className="sidebar-nav-item" style={{ animationDelay: `${index * 35}ms` }}>
           <SidebarNavLink item={item} collapsed={collapsed} />
@@ -362,7 +364,7 @@ function SidebarCollapseFooter() {
   const { collapsed, toggle } = useSidebar();
 
   return (
-    <div className="border-t border-white/10 p-3">
+    <div className="shrink-0 border-t border-white/10 p-3">
       <button
         type="button"
         onClick={toggle}
@@ -427,11 +429,11 @@ function MobileSidebarDrawer({ items, brandSubtitle }: { items: NavItem[]; brand
         aria-label="Close navigation menu"
         onClick={() => setMobileOpen(false)}
       />
-      <aside className="sidebar-drawer absolute inset-y-0 left-0 flex w-[min(18rem,85vw)] flex-col border-r border-white/10 bg-navy shadow-2xl">
-        <div className="flex items-start justify-between border-b border-white/10 p-4">
+      <aside className="sidebar-drawer absolute inset-y-0 left-0 flex h-full max-h-dvh w-[min(18rem,85vw)] flex-col overflow-hidden border-r border-white/10 bg-navy shadow-2xl">
+        <div className="flex shrink-0 items-start justify-between border-b border-white/10 p-4">
           <div>
             <GeepayLogo />
-            <p className="mt-2 text-sm font-bold text-white">Geepay</p>
+            {/* <p className="mt-2 text-sm font-bold text-white">Geepay</p> */}
             <p className="text-[10px] text-white/70">{brandSubtitle}</p>
           </div>
           <button
@@ -453,16 +455,17 @@ function MobileSidebarDrawer({ items, brandSubtitle }: { items: NavItem[]; brand
 
 function GeepayLogo({ className = 'h-9 w-9' }) {
   return (
-    <div
-      className={`flex shrink-0 items-center justify-center rounded-xl bg-navy-dark ring-1 ring-white/10 ${className}`}
-      aria-hidden="true"
-    >
-      <svg viewBox="0 0 40 40" className="h-5 w-5" fill="none">
-        <circle cx="20" cy="20" r="14" stroke="#D1D2EF" strokeWidth="2" />
-        <path d="M20 8a12 12 0 0 1 0 24" fill="#00afeb" stroke="#D1D2EF" strokeWidth="1.5" />
-        <circle cx="20" cy="20" r="4" fill="#ECECF8" />
-      </svg>
-    </div>
+    <img src="/images/geepay-white-8.png" alt="Geepay" className={className} />
+    // <div
+    //   className={`flex shrink-0 items-center justify-center rounded-xl bg-navy-dark ring-1 ring-white/10 ${className}`}
+    //   aria-hidden="true"
+    // >
+    //   <svg viewBox="0 0 40 40" className="h-5 w-5" fill="none">
+    //     <circle cx="20" cy="20" r="14" stroke="#D1D2EF" strokeWidth="2" />
+    //     <path d="M20 8a12 12 0 0 1 0 24" fill="#00afeb" stroke="#D1D2EF" strokeWidth="1.5" />
+    //     <circle cx="20" cy="20" r="4" fill="#ECECF8" />
+    //   </svg>
+    // </div>
   );
 }
 
@@ -596,7 +599,7 @@ function SidebarNav({ items, brandSubtitle }: { items: NavItem[]; brandSubtitle:
   return (
     <aside
       className={cn(
-        'sidebar-shell hidden shrink-0 flex-col border-r border-white/10 bg-navy md:flex',
+        'sidebar-shell sticky top-0 hidden h-screen max-h-dvh shrink-0 flex-col overflow-hidden border-r border-white/10 bg-navy md:flex',
         'transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none',
         collapsed ? 'w-[4.25rem]' : 'w-56',
       )}
@@ -759,7 +762,7 @@ export function PortalLayout() {
             <div className="flex items-center justify-between border-b border-white/10 bg-navy px-4 py-3 md:hidden">
               <div className="flex items-center gap-2">
                 <SidebarToggleButton />
-                <GeepayLogo className="h-8 w-8" />
+                <GeepayLogo  />
                 <p className="text-sm font-bold text-white">Geepay Admin</p>
               </div>
             </div>

@@ -20,6 +20,7 @@ import { CheckoutRedirect } from './components/marketplace/CheckoutRedirect';
 
 import AdminDashboardPage from '@/(admin)/dashboard/AdminDashboardPage';
 import AdminStoresPage from '@/(admin)/stores/AdminStoresPage';
+import AdminAddStorePage from '@/(admin)/stores/AddStorePage';
 import AdminKycPage from '@/(admin)/kyc/KycPage';
 import AdminMerchantOnboardPage from '@/(admin)/merchants-onboarding/MerchantOnboardPage';
 import PlatformAdminCreatePage from '@/(admin)/platform-admins/PlatformAdminCreatePage';
@@ -123,6 +124,7 @@ export default function App() {
         <Route path="admin/merchants/new" element={<ProtectedRoute roles={['system_admin']}><AdminMerchantOnboardPage /></ProtectedRoute>} />
         <Route path="admin/admins/new" element={<ProtectedRoute roles={['system_admin']}><PlatformAdminCreatePage /></ProtectedRoute>} />
         <Route path="admin/stores" element={<ProtectedRoute roles={['system_admin']}><AdminStoresPage /></ProtectedRoute>} />
+        <Route path="admin/stores/new" element={<ProtectedRoute roles={['system_admin']}><AdminAddStorePage /></ProtectedRoute>} />
 
         <Route path="owner" element={<ProtectedRoute roles={MERCHANT_ROLES}><OwnerDashboardPage /></ProtectedRoute>} />
         <Route path="owner/stores" element={<ProtectedRoute roles={MERCHANT_ROLES}><MerchantStoresPage /></ProtectedRoute>} />

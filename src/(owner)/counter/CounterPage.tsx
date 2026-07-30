@@ -165,42 +165,38 @@ function FulfillmentTabs({
   ];
 
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-forest-muted">Fulfillment</p>
-      <div
-        className="grid grid-cols-2 gap-1 rounded-xl border border-cream-dark bg-cream/50 p-1"
-        role="tablist"
-        aria-label="Order fulfillment"
-      >
-        {options.map((opt) => {
-          const active = value === opt.id;
-          return (
-            <button
-              key={opt.id}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              onClick={() => onChange(opt.id)}
-              className={cn(
-                'flex flex-col items-center gap-1.5 rounded-lg px-3 py-3 text-sm font-semibold transition',
-                active
-                  ? 'bg-white text-forest shadow-sm ring-1 ring-cream-dark'
-                  : 'text-forest-muted hover:bg-white/60 hover:text-charcoal',
-              )}
-            >
-              <span className={cn('rounded-lg p-1.5', active ? 'bg-forest/10 text-forest' : 'bg-cream text-forest-muted')}>
-                {opt.icon}
-              </span>
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
+    <div
+      className="grid grid-cols-2 gap-0.5 rounded-lg bg-cream/70 p-0.5 ring-1 ring-cream-dark"
+      role="tablist"
+      aria-label="Order fulfillment"
+    >
+      {options.map((opt) => {
+        const active = value === opt.id;
+        return (
+          <button
+            key={opt.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(opt.id)}
+            className={cn(
+              'inline-flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-semibold transition active:scale-[0.98]',
+              active
+                ? 'bg-white text-forest shadow-sm'
+                : 'text-forest-muted hover:text-charcoal',
+            )}
+          >
+            <span className={cn(active ? 'text-forest' : 'text-forest-muted/70')}>{opt.icon}</span>
+            {opt.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
 
-function productMatchesQuery(product: any, query: string) {  if (!query) return true;
+function productMatchesQuery(product: any, query: string) {
+  if (!query) return true;
   const q = query.toLowerCase();
   return (
     product.name?.toLowerCase().includes(q) ||
@@ -298,12 +294,13 @@ function CounterTill({ store }: { store: any }) {
     ];
   }, [isFood, categories]);
 
-  return (    <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-4 lg:flex-row lg:gap-6">
+  return (
+    <div className="flex min-h-[calc(100vh-8rem)] flex-col gap-4 lg:flex-row lg:items-start lg:gap-5">
       {/* Product catalog */}
       <section className="min-w-0 flex-1 space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-charcoal">Counter</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-charcoal">Counter</h1>
             <p className="text-sm text-forest-muted">Take orders for walk-in customers</p>
           </div>
           <div className="relative min-w-[12rem] flex-1 sm:max-w-xs">
@@ -334,7 +331,7 @@ function CounterTill({ store }: { store: any }) {
         )}
 
         {!loading && !error && filteredProducts.length > 0 && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
             {filteredProducts.map((product) => {
               const categoryLabel =
                 product.category_name ?? product.menu_category_name ?? product.category ?? null;
@@ -344,44 +341,35 @@ function CounterTill({ store }: { store: any }) {
                   product={product}
                   onAdd={addItem}
                   className={[
-                    'group flex flex-col overflow-hidden rounded-2xl bg-white text-left',
-                    'shadow-[0_1px_4px_rgba(0,0,0,0.06),0_6px_18px_-2px_rgba(0,0,0,0.08)]',
-                    'transition-all duration-300 ease-out',
-                    'hover:-translate-y-1 hover:shadow-[0_4px_22px_rgba(56,61,146,0.2),0_1px_4px_rgba(0,0,0,0.06)]',
+                    'group flex flex-col overflow-hidden rounded-xl bg-white text-left',
+                    'ring-1 ring-cream-dark transition',
+                    'hover:ring-forest/25 hover:shadow-[0_10px_28px_-16px_rgba(8,12,48,0.28)]',
                     'active:scale-[0.98] active:duration-100',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt/40',
-                    'disabled:opacity-50 disabled:hover:translate-y-0 disabled:active:scale-100',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest/35',
+                    'disabled:opacity-50 disabled:hover:shadow-none disabled:active:scale-100',
                   ].join(' ')}
                 >
-                  <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-cobalt-50/60 to-sky-50/60">
+                  <div className="relative aspect-square overflow-hidden bg-sage-light">
                     {product.image_url ? (
                       <img
                         src={product.image_url}
                         alt=""
-                        className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.07]"
+                        loading="lazy"
+                        decoding="async"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
                       />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-3xl font-bold text-cobalt/15">
+                      <div className="flex h-full items-center justify-center text-2xl font-semibold tracking-tight text-forest-muted/30">
                         {product.name?.charAt(0)?.toUpperCase()}
                       </div>
                     )}
-                    {categoryLabel && (
-                      <span className="absolute left-2 top-2 max-w-[calc(100%-2rem)] truncate rounded-full bg-black/45 px-2 py-0.5 text-[10px] font-medium leading-tight text-white backdrop-blur-[6px]">
-                        {categoryLabel}
-                      </span>
-                    )}
                     <span
-                      className={[
-                        'absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full',
-                        'bg-cobalt text-white shadow-[0_2px_8px_rgba(56,61,146,0.45)]',
-                        'transition-all duration-200 group-hover:scale-[1.14] group-hover:bg-brand-gradient',
-                        'group-hover:shadow-[0_4px_14px_rgba(56,61,146,0.55)]',
-                      ].join(' ')}
+                      className="absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-forest text-white shadow-sm transition group-hover:scale-105"
                       aria-hidden="true"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        className="h-3 w-3"
+                        className="h-3.5 w-3.5"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -391,11 +379,16 @@ function CounterTill({ store }: { store: any }) {
                       </svg>
                     </span>
                   </div>
-                  <div className="flex flex-1 flex-col px-2.5 pb-3 pt-2.5">
-                    <h3 className="line-clamp-2 text-sm font-bold leading-snug tracking-tight text-charcoal">
+                  <div className="flex flex-1 flex-col gap-0.5 px-2.5 pb-2.5 pt-2">
+                    <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug tracking-tight text-charcoal">
                       {product.name}
                     </h3>
-                    <p className="mt-1 text-sm font-bold text-cobalt">
+                    {categoryLabel && (
+                      <p className="truncate text-[10px] font-medium uppercase tracking-wide text-forest-muted/80">
+                        {categoryLabel}
+                      </p>
+                    )}
+                    <p className="mt-auto pt-1 text-[13px] font-semibold tabular-nums text-forest">
                       {formatCurrency(product.price, currency)}
                     </p>
                   </div>
@@ -407,51 +400,63 @@ function CounterTill({ store }: { store: any }) {
       </section>
 
       {/* Till / cart panel */}
-      <aside className="flex w-full shrink-0 flex-col rounded-2xl border border-cream-dark bg-white shadow-lg lg:w-[22rem] xl:w-[26rem]">
-        <div className="border-b border-cream-dark px-4 py-3">
-          <h2 className="text-lg font-bold text-charcoal">Current order</h2>
+      <aside className="flex max-h-[min(72vh,42rem)] w-full shrink-0 flex-col overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-cream-dark lg:sticky lg:top-4 lg:h-[calc(100vh-8rem)] lg:max-h-none lg:w-[22rem] xl:w-[24rem]">
+        <div className="shrink-0 border-b border-cream-dark px-4 py-3">
+          <div className="flex items-baseline justify-between gap-2">
+            <h2 className="text-base font-bold tracking-tight text-charcoal">Current order</h2>
+            {items.length > 0 && (
+              <span className="rounded-md bg-sage-light px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-forest">
+                {totals.itemCount}
+              </span>
+            )}
+          </div>
           <p className="text-xs text-forest-muted">
-            {items.length ? `${totals.itemCount} item${totals.itemCount === 1 ? '' : 's'}` : 'Tap items to add'}
+            {items.length ? `${totals.itemCount} item${totals.itemCount === 1 ? '' : 's'} in cart` : 'Tap items to add'}
           </p>
         </div>
 
-        <div className="flex-1 space-y-2 overflow-y-auto p-4" style={{ maxHeight: 'min(50vh, 28rem)' }}>
+        <div className="min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain p-3">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
+            <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
               {Icons.cart}
               <p className="text-sm font-medium text-forest-muted">Cart is empty</p>
               <p className="text-xs text-forest-muted/80">Tap items on the left to add them</p>
             </div>
           ) : (
             items.map((item) => (
-              <div key={item.line_id} className="flex gap-3 rounded-xl border border-cream-dark/80 bg-cream/30 p-3">
+              <div
+                key={item.line_id}
+                className="flex gap-2.5 rounded-xl bg-cream/40 p-2.5 ring-1 ring-cream-dark/70"
+              >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-charcoal">{item.name}</p>
+                  <p className="truncate text-sm font-semibold tracking-tight text-charcoal">{item.name}</p>
                   {item.variant_label && (
-                    <p className="truncate text-xs text-forest-muted">{item.variant_label}</p>
+                    <p className="truncate text-[11px] text-forest-muted">{item.variant_label}</p>
                   )}
-                  {item.item_notes && <p className="text-xs italic text-forest-muted">{item.item_notes}</p>}
-                  <p className="mt-1 text-sm font-medium text-forest">
+                  {item.item_notes && (
+                    <p className="text-[11px] italic text-forest-muted">{item.item_notes}</p>
+                  )}
+                  <p className="mt-1 text-sm font-semibold tabular-nums text-forest">
                     {formatCurrency(parseFloat(item.unit_price) * item.quantity, currency)}
                   </p>
                 </div>
-                <div className="flex flex-col items-end gap-1.5">
-                  <div className="flex items-center overflow-hidden rounded-lg border border-cream-dark bg-white">
+                <div className="flex flex-col items-end gap-1">
+                  <div className="flex items-center overflow-hidden rounded-lg bg-white ring-1 ring-cream-dark">
                     <button
                       type="button"
                       aria-label="Decrease quantity"
-                      className="flex h-9 w-9 items-center justify-center text-forest transition hover:bg-cream"
+                      className="flex h-8 w-8 items-center justify-center text-forest transition hover:bg-cream"
                       onClick={() => updateQuantity(item.line_id, item.quantity - 1)}
                     >
                       {Icons.minus}
                     </button>
-                    <span className="min-w-[2rem] border-x border-cream-dark px-1 text-center text-sm font-bold tabular-nums">
+                    <span className="min-w-[1.75rem] border-x border-cream-dark px-1 text-center text-sm font-bold tabular-nums">
                       {item.quantity}
                     </span>
                     <button
                       type="button"
                       aria-label="Increase quantity"
-                      className="flex h-9 w-9 items-center justify-center text-forest transition hover:bg-cream"
+                      className="flex h-8 w-8 items-center justify-center text-forest transition hover:bg-cream"
                       onClick={() => updateQuantity(item.line_id, item.quantity + 1)}
                     >
                       {Icons.plus}
@@ -459,7 +464,7 @@ function CounterTill({ store }: { store: any }) {
                   </div>
                   <button
                     type="button"
-                    className="inline-flex items-center gap-1 text-xs font-medium text-red-600 hover:text-red-700"
+                    className="inline-flex items-center gap-1 text-[11px] font-medium text-red-600 hover:text-red-700"
                     onClick={() => removeItem(item.line_id)}
                   >
                     {Icons.trash}
@@ -471,7 +476,8 @@ function CounterTill({ store }: { store: any }) {
           )}
         </div>
 
-        <div className="space-y-3 border-t border-cream-dark p-4">
+        {/* Sticky checkout foot: fulfillment, notes, totals, pay */}
+        <div className="shrink-0 space-y-2.5 border-t border-cream-dark bg-white p-3 shadow-[0_-8px_24px_-16px_rgba(8,12,48,0.2)]">
           {isFood && (
             <>
               <FulfillmentTabs
@@ -483,10 +489,13 @@ function CounterTill({ store }: { store: any }) {
                 }}
               />
               {fulfillmentType === 'dine_in' && (
-                <div className="rounded-xl border border-cream-dark bg-cream/30 p-3">
-                  <label htmlFor="counter-table" className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-forest-muted">
+                <div>
+                  <label
+                    htmlFor="counter-table"
+                    className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold text-forest-muted"
+                  >
                     {Icons.table}
-                    Select table
+                    Table
                   </label>
                   <select
                     id="counter-table"
@@ -495,7 +504,7 @@ function CounterTill({ store }: { store: any }) {
                       setTableId(e.target.value);
                       setSubmitError(null);
                     }}
-                    className="field-input w-full text-sm font-medium"
+                    className="field-input w-full py-2 text-sm font-medium"
                   >
                     <option value="">Choose a table…</option>
                     {tables.map((t: any) => (
@@ -506,7 +515,7 @@ function CounterTill({ store }: { store: any }) {
                     ))}
                   </select>
                   {tables.length === 0 && (
-                    <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-800">
+                    <p className="mt-1.5 flex items-start gap-1.5 text-[11px] text-amber-800">
                       <svg className="mt-0.5 h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -517,31 +526,30 @@ function CounterTill({ store }: { store: any }) {
               )}
             </>
           )}
-          <div>
-            <label className="mb-1 block text-xs font-medium text-forest-muted">Order notes</label>
-            <textarea
-              value={orderNotes}
-              onChange={(e) => setOrderNotes(e.target.value)}
-              rows={2}
-              placeholder="e.g. customer name"
-              className="field-input w-full text-sm"
-            />
-          </div>
 
-          <div className="space-y-1 text-sm">
-            <div className="flex justify-between text-forest-muted">
+          <input
+            type="text"
+            value={orderNotes}
+            onChange={(e) => setOrderNotes(e.target.value)}
+            placeholder="Order notes (optional)"
+            aria-label="Order notes"
+            className="field-input w-full py-2 text-sm"
+          />
+
+          <div className="space-y-0.5 rounded-lg bg-cream/50 px-2.5 py-2 text-sm">
+            <div className="flex justify-between text-xs text-forest-muted">
               <span>Subtotal</span>
-              <span>{formatCurrency(totals.subtotal, currency)}</span>
+              <span className="tabular-nums">{formatCurrency(totals.subtotal, currency)}</span>
             </div>
             {totals.tax > 0 && (
-              <div className="flex justify-between text-forest-muted">
+              <div className="flex justify-between text-xs text-forest-muted">
                 <span>Tax</span>
-                <span>{formatCurrency(totals.tax, currency)}</span>
+                <span className="tabular-nums">{formatCurrency(totals.tax, currency)}</span>
               </div>
             )}
-            <div className="flex justify-between text-base font-bold text-charcoal">
+            <div className="flex justify-between pt-0.5 text-[15px] font-bold text-charcoal">
               <span>Total</span>
-              <span>{formatCurrency(totals.total, currency)}</span>
+              <span className="tabular-nums text-forest">{formatCurrency(totals.total, currency)}</span>
             </div>
           </div>
 
@@ -553,21 +561,22 @@ function CounterTill({ store }: { store: any }) {
               {submitError}
             </p>
           )}
+
           <div className="flex gap-2">
             <Button
               variant="secondary"
-              className="flex-1"
+              className="h-11 flex-1"
               disabled={!items.length || submitting}
               onClick={clearCart}
             >
               Clear
             </Button>
             <Button
-              className="flex-[2]"
+              className="h-11 flex-[2] text-[13px] sm:text-sm"
               disabled={!items.length || submitting}
               onClick={handlePlaceOrder}
             >
-              {submitting ? 'Placing…' : 'Complete & pay at counter'}
+              {submitting ? 'Placing…' : 'Complete & pay'}
             </Button>
           </div>
         </div>
@@ -579,7 +588,8 @@ function CounterTill({ store }: { store: any }) {
           <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
               {Icons.check}
-            </div>            <h3 className="text-xl font-bold text-charcoal">Order placed</h3>
+            </div>
+            <h3 className="text-xl font-bold text-charcoal">Order placed</h3>
             <p className="mt-1 text-sm text-forest-muted">
               Order <span className="font-semibold text-charcoal">#{lastOrder.order_number}</span> is ready for
               fulfillment.

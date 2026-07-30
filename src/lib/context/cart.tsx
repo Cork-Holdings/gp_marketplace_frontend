@@ -68,7 +68,7 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       } else {
         items = [...state.items, action.payload];
       }
-      return { ...state, items, isOpen: true };
+      return { ...state, items };
     }
     case 'UPDATE_QUANTITY': {
       const items = state.items
