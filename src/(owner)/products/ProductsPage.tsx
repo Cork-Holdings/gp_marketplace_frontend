@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { RecordListTable } from '@/components/common/RecordListTable';
+import { useMemo, useRef, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/context/useAuth';
 import { useMarketplace } from '@/lib/context/useMarketplace';
@@ -17,6 +18,10 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { TableSkeleton } from '@/components/common/Skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { useConfirm } from '@/hooks/useConfirm';
+import { purchaseActionLabel, purchaseFlowFor } from '@/lib/purchaseFlow';
+import { UserFacingError, userMessage } from '@/lib/userMessage';
+import { showToast } from '@/lib/actionFeedback';
+import { usePlan } from '@/lib/context/plan';
 
 function productMatchesQuery(product, query) {
   if (!query) return true;
@@ -32,6 +37,8 @@ export default function MerchantProductsPage() {
   const { isStoreOwner } = useAuth();
   const { selectedStore, selectedStoreId } = useMarketplace();
   const { category, usesInventory, isFood } = useMarketplaceCapabilities(selectedStore);
+  const { data: activePlan } = usePlan();
+  const canCreateStock = !usesInventory || Boolean(activePlan?.plan.data.features.includes('inventory'));
   const { confirm, dialog } = useConfirm();
 
   const [submitting, setSubmitting] = useState(false);
@@ -43,6 +50,7 @@ export default function MerchantProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [availabilityFilter, setAvailabilityFilter] = useState('all');
   const [deleteError, setDeleteError] = useState(null);
+  const createdProductRef = useRef<{ storeId: string; id: string } | null>(null);
 
   const {
     data: productData,
@@ -82,26 +90,40 @@ export default function MerchantProductsPage() {
     setCreateOpen(false);
     setEditing(null);
     setFormError(null);
+    createdProductRef.current = null;
   };
 
   const handleCreate = async (payload, imageFile) => {
-    if (!selectedStoreId) return;
+    if (!selectedStoreId || !canCreateStock) return;
     setSubmitting(true);
     setFormError(null);
     try {
-      const created = await ownerApi.createProduct(selectedStoreId, payload);
-      const product = created?.product ?? created;
-      if (imageFile && product?.id) {
-        await ownerApi.uploadProductImage(selectedStoreId, product.id, imageFile);
+      let saved = createdProductRef.current;
+      if (saved && saved.storeId !== selectedStoreId) throw new UserFacingError('Return to the original branch to finish saving this item, or close this form and start a new item.');
+      if (!saved) {
+        const created = await ownerApi.createProduct(selectedStoreId, payload);
+        const product = created?.product ?? created;
+        if (!product?.id) throw new UserFacingError('The save result could not be confirmed. Close this form and check the catalogue before adding this item again.');
+        saved = { storeId: selectedStoreId, id: product.id };
+        createdProductRef.current = saved;
+      } else {
+        const { name, sku, description, price, purchase_flow, is_active, image_url } = payload;
+        await ownerApi.updateProduct(selectedStoreId, saved.id, { name, sku, description, price: price ?? payload.variants?.[0]?.price, purchase_flow, is_active, image_url });
       }
-      if (isFood && payload.menu_category_id && product?.id) {
-        await ownerApi.assignProductCategory(selectedStoreId, product.id, payload.menu_category_id);
+      if (imageFile) {
+        await ownerApi.uploadProductImage(selectedStoreId, saved.id, imageFile);
+      }
+      if (isFood) {
+        await ownerApi.assignProductCategory(selectedStoreId, saved.id, payload.menu_category_id || null);
       }
       setCreateOpen(false);
+      createdProductRef.current = null;
+      showToast(imageFile ? 'Item and photo saved. Your photo will appear wherever this item is listed.' : 'Item saved to your catalogue.');
       retry();
       retryCategories();
     } catch (err) {
-      setFormError(err);
+      setFormError(createdProductRef.current ? new UserFacingError(`The item was created, but some changes could not be saved. ${userMessage(err, 'Check your connection and try again.')} Save again to finish this same item; it will not create a duplicate.`) : err);
+      retry();
     } finally {
       setSubmitting(false);
     }
@@ -124,9 +146,10 @@ export default function MerchantProductsPage() {
         }
       }
       setEditing(null);
+      showToast(imageFile ? 'Item and photo updated.' : 'Item updated.');
       retry();
     } catch (err) {
-      setFormError(err);
+      setFormError(new UserFacingError(`Some changes could not be saved. ${userMessage(err, 'Check your connection and try again.')} Your selected photo is still here; save again to finish.`));
     } finally {
       setSubmitting(false);
     }
@@ -180,13 +203,15 @@ export default function MerchantProductsPage() {
                 : 'Configure bookable services and appointment slots.'}
           </p>
         </div>
-        <Button type="button" onClick={() => setCreateOpen(true)} disabled={!selectedStoreId} className="gap-1.5">
+        <Button type="button" onClick={() => setCreateOpen(true)} disabled={!selectedStoreId || !canCreateStock} aria-describedby={!canCreateStock ? 'catalogue-plan-note' : undefined} className="gap-1.5">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
           Add {itemLabel}
         </Button>
       </header>
+
+      {!canCreateStock && <p id="catalogue-plan-note" className="reference-notice">{activePlan ? 'Adding stocked products requires the Inventory module. Review your Subscription Plan or contact the administrator. Existing catalogue details and customer work remain accessible.' : 'Checking your plan before adding stocked products…'}</p>}
 
       {!selectedStoreId ? (
         <p className="text-sm text-forest-muted">Select a branch to manage the catalog.</p>
@@ -248,8 +273,8 @@ export default function MerchantProductsPage() {
             <EmptyState
               title="No products yet"
               description="Add your first item to start selling from this branch."
-              actionLabel={`Add ${itemLabel}`}
-              onAction={() => setCreateOpen(true)}
+              actionLabel={canCreateStock ? `Add ${itemLabel}` : undefined}
+              onAction={canCreateStock ? () => setCreateOpen(true) : undefined}
             />
           ) : filtered.length === 0 ? (
             <EmptyState
@@ -264,13 +289,14 @@ export default function MerchantProductsPage() {
           ) : (
             <div className="dashboard-card overflow-hidden p-0">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] text-left text-sm">
+                <RecordListTable className="w-full min-w-[560px] text-left text-sm">
                   <thead className="border-b border-cream-dark bg-cream/60 text-[11px] font-medium uppercase tracking-wide text-forest-muted">
                     <tr>
                       <th className="px-4 py-3">Name</th>
                       <th className="px-4 py-3">SKU</th>
                       <th className="px-4 py-3">Price</th>
                       <th className="px-4 py-3">Stock</th>
+                      <th className="px-4 py-3">Customer step</th>
                       <th className="px-4 py-3">Actions</th>
                     </tr>
                   </thead>
@@ -278,14 +304,19 @@ export default function MerchantProductsPage() {
                     {filtered.map((p) => (
                       <tr key={p.id} className="hover:bg-cream/40">
                         <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                          {p.image_url ? <img src={p.image_url} alt="" loading="lazy" className="h-12 w-12 shrink-0 rounded-md border border-cream-dark object-cover" /> : <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-cream-dark bg-cream text-xs text-forest-muted">No photo</span>}
+                          <div className="min-w-0">
                           <div className="font-medium text-charcoal">{p.name}</div>
                           {p.description && (
                             <p className="mt-0.5 line-clamp-1 text-xs text-forest-muted">{p.description}</p>
                           )}
+                          </div></div>
                         </td>
                         <td className="px-4 py-3 text-forest-muted">{p.sku || '—'}</td>
                         <td className="px-4 py-3 tabular-nums">{formatCurrency(p.price)}</td>
                         <td className="px-4 py-3">{p.stock_quantity ?? '—'}</td>
+                        <td className="px-4 py-3 text-forest-muted">{purchaseActionLabel(purchaseFlowFor(p, selectedStore))}</td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-2">
                             <button
@@ -310,7 +341,7 @@ export default function MerchantProductsPage() {
                       </tr>
                     ))}
                   </tbody>
-                </table>
+                </RecordListTable>
               </div>
               <p className="border-t border-cream-dark px-4 py-2 text-xs text-forest-muted">
                 Showing {filtered.length} of {products.length}
@@ -337,6 +368,7 @@ export default function MerchantProductsPage() {
         ) : (
           <ProductVariantForm
             category={category}
+            storeType={selectedStore?.store_type}
             onSubmit={handleCreate}
             submitting={submitting}
             embedded
@@ -348,7 +380,7 @@ export default function MerchantProductsPage() {
       <Modal
         open={Boolean(editing)}
         onClose={closeForms}
-        title={isFood ? 'Edit menu item' : 'Edit product'}
+        title={isFood ? 'Edit menu item' : usesInventory ? 'Edit product' : 'Edit service'}
         size="lg"
       >
         {isFood && editing ? (
@@ -363,6 +395,7 @@ export default function MerchantProductsPage() {
         ) : editing ? (
           <ProductVariantForm
             category={category}
+            storeType={selectedStore?.store_type}
             onSubmit={handleUpdate}
             submitting={submitting}
             embedded

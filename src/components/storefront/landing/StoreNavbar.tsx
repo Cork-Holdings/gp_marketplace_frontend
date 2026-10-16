@@ -34,12 +34,12 @@ function SearchIcon() {
   );
 }
 
-export function StoreNavbar({ store, onSearch, dineInMode = false, isFood = false }) {
+export function StoreNavbar({ store, onSearch, dineInMode = false, isFood = false, isService = false, showCart = true }) {
   const { totals, toggleCart } = useCart();
   const [search, setSearch] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
   const storeImage = getStoreLogoUrl(store);
-  const navLinks = dineInMode ? DINE_IN_NAV_LINKS : isFood ? FOOD_NAV_LINKS : RETAIL_NAV_LINKS;
+  const navLinks = dineInMode ? DINE_IN_NAV_LINKS : isFood ? FOOD_NAV_LINKS : isService ? [{ label: 'Services', href: '#shop' }, ...RETAIL_NAV_LINKS.slice(1)] : RETAIL_NAV_LINKS;
   const handleSearch = (e) => {
     e.preventDefault();
     onSearch?.(search.trim());
@@ -71,7 +71,7 @@ export function StoreNavbar({ store, onSearch, dineInMode = false, isFood = fals
 
           <a href="#top" className="flex items-center gap-2 font-serif text-2xl font-semibold tracking-tight text-forest">
             {storeImage ? (
-              <img src={storeImage} alt="" className="h-9 w-9 rounded-full object-cover" />
+              <img src={storeImage} alt="" width={36} height={36} className="h-9 w-9 rounded-full object-cover" />
             ) : null}
             {store.name}
           </a>
@@ -101,7 +101,7 @@ export function StoreNavbar({ store, onSearch, dineInMode = false, isFood = fals
               </Link>
             )}
 
-            <button
+            {showCart && <button
               type="button"
               onClick={() => toggleCart(true)}
               className="relative flex h-10 w-10 items-center justify-center rounded-full border border-charcoal/15 text-charcoal transition hover:border-forest hover:text-forest"
@@ -113,7 +113,7 @@ export function StoreNavbar({ store, onSearch, dineInMode = false, isFood = fals
                   {totals.itemCount > 9 ? '9+' : totals.itemCount}
                 </span>
               )}
-            </button>
+            </button>}
           </div>
         </div>
 
@@ -136,12 +136,12 @@ export function StoreNavbar({ store, onSearch, dineInMode = false, isFood = fals
 
           <a href="#top" className="flex items-center gap-2 font-serif text-xl font-semibold text-forest">
             {storeImage ? (
-              <img src={storeImage} alt="" className="h-8 w-8 rounded-full object-cover" />
+              <img src={storeImage} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
             ) : null}
             {store.name}
           </a>
 
-          <button
+          {showCart && <button
             type="button"
             onClick={() => toggleCart(true)}
             className="relative rounded-full p-2"
@@ -153,7 +153,7 @@ export function StoreNavbar({ store, onSearch, dineInMode = false, isFood = fals
                 {totals.itemCount}
               </span>
             )}
-          </button>
+          </button>}
         </div>
 
         {menuOpen && (

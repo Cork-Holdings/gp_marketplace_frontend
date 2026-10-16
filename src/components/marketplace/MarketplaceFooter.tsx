@@ -1,27 +1,13 @@
 import { Link } from 'react-router-dom';
-
+import { MarketplaceBrand } from '@/components/reference/ReferenceUI';
+import { usePlatformDocuments } from '@/hooks/usePlatformDocuments';
+import type { WebsitePage } from '@/lib/platform';
 export function MarketplaceFooter() {
-  const year = new Date().getFullYear();
-
-  return (
-    <footer className="border-t border-cream-dark bg-cream-dark/40 px-4 py-12 lg:px-8">
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 sm:flex-row">
-        <p className="font-serif text-xl text-forest">Geepay</p>
-        <p className="text-center text-xs text-forest-muted sm:text-sm">
-          © {year} Geepay. Pay securely with Mobile Money.
-        </p>
-        <div className="flex gap-6 text-xs font-medium text-forest-muted">
-          <a href="#stores" className="hover:text-forest">
-            Stores
-          </a>
-          <Link to="/register/merchant" className="hover:text-forest">
-            Sell on Geepay
-          </Link>
-          <Link to="/login" className="hover:text-forest">
-            Merchant login
-          </Link>
-        </div>
-      </div>
-    </footer>
-  );
+  const pages=usePlatformDocuments<WebsitePage>('page');
+  return <footer className="discovery-footer"><div className="discovery-container">
+    <Link to="/" aria-label="GeePay marketplace home"><MarketplaceBrand compact /></Link>
+    <nav aria-label="Marketplace footer"><div><Link to="/#marketplace-results">Marketplace</Link><p>Products to shop. Services to book.</p></div><div><Link to="/register/merchant">For businesses</Link><p>Build your business with GeePay.</p></div><div><Link to="/coming-soon/support">Help & support</Link><p>Shopping, bookings & custom work.</p></div></nav>
+    {Boolean(pages.items?.length)&&<nav aria-label="Website information pages">{pages.items?.map(page=><Link key={page.slug} to={`/pages/${page.slug}`}>{page.data.title}</Link>)}</nav>}
+    <p className="discovery-copyright">© {new Date().getFullYear()} GeePay.<br />All rights reserved.</p>
+  </div></footer>;
 }

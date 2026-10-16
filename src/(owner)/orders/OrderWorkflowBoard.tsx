@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { ownerApi } from '@/lib/api/services';
 import { useRealtimeOrders } from '@/lib/context/useRealtimeOrder';
@@ -10,8 +10,7 @@ import { OrderKanban } from '../dashboard/OwnerPanels';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/common/ErrorState';
 import { TableSkeleton } from '@/components/common/Skeleton';
-
-type BoardMode = 'delivery' | 'dine_in';
+import { WorkflowIcon, type WorkflowIconName } from '@/components/common/WorkflowIcon';
 
 function OrderSummaryBar({ orders }) {
   const stats = useMemo(() => {
@@ -27,19 +26,19 @@ function OrderSummaryBar({ orders }) {
   }, [orders]);
 
   const cards = [
-    { label: 'Active', value: stats.active, hint: 'Not completed or cancelled' },
-    { label: 'New / incoming', value: stats.incoming, hint: 'Awaiting payment or just paid' },
-    { label: 'In progress', value: stats.inProgress, hint: 'Being prepared or serviced' },
-    { label: 'Ready / out', value: stats.ready, hint: 'Ready for pickup, delivery, or serve' },
+    { label: 'Active', value: stats.active, hint: 'Not completed or cancelled', icon: 'layers' },
+    { label: 'New / incoming', value: stats.incoming, hint: 'Awaiting payment or just paid', icon: 'inbox' },
+    { label: 'In progress', value: stats.inProgress, hint: 'Being prepared or serviced', icon: 'clock' },
+    { label: 'Ready / out', value: stats.ready, hint: 'Ready for pickup, delivery, or serve', icon: 'truck' },
   ];
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
-        <div key={card.label} className="rounded-xl border border-cream-dark bg-white px-4 py-3 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-wide text-forest-muted">{card.label}</p>
-          <p className="mt-1 text-2xl font-bold tabular-nums text-charcoal">{card.value}</p>
-          <p className="mt-0.5 text-xs text-forest-muted">{card.hint}</p>
+        <div key={card.label} className="rounded-xl border border-cream-dark bg-white p-4">
+          <div className="flex items-center justify-between gap-2"><p className="text-sm font-medium text-forest-muted">{card.label}</p><span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gp-cobalt-50 text-forest"><WorkflowIcon name={card.icon as WorkflowIconName} size={19} /></span></div>
+          <p className="mt-1 text-3xl font-bold tabular-nums text-charcoal">{card.value}</p>
+          <p className="mt-2 text-xs leading-5 text-forest-muted">{card.hint}</p>
         </div>
       ))}
     </div>
@@ -49,23 +48,13 @@ function OrderSummaryBar({ orders }) {
 export function OrderWorkflowBoard() {
   const { selectedStore, selectedStoreId } = useMarketplace();
   const capabilities = useMarketplaceCapabilities(selectedStore);
-  const { orders, loading, error, refreshOrders, soundEnabled, setSoundEnabled, acknowledgeAlerts, hasActiveAlerts } =
+  const { orders, filters, loading, error, refreshOrders, soundEnabled, setSoundEnabled, acknowledgeAlerts, hasActiveAlerts } =
     useRealtimeOrders();
 
-  const deliveryOrders = useMemo(
-    () => orders.filter((o) => o.fulfillment_type !== 'dine_in'),
-    [orders],
-  );
-  const dineInOrders = useMemo(
-    () => orders.filter((o) => o.fulfillment_type === 'dine_in'),
-    [orders],
-  );
-
-  const defaultMode: BoardMode =
-    dineInOrders.length > deliveryOrders.length ? 'dine_in' : 'delivery';
-  const [mode, setMode] = useState<BoardMode | null>(null);
-  const activeMode = mode ?? defaultMode;
-  const boardOrders = activeMode === 'dine_in' ? dineInOrders : deliveryOrders;
+  const liveOrders = orders.filter(order => !['completed', 'cancelled', 'fulfilled'].includes(order.status));
+  const foodLanes = filters.fulfillment === 'dine_in'
+    ? DINE_IN_KANBAN_LANES.filter(lane => lane.key !== 'served')
+    : capabilities.kanbanLanes.map(lane => lane.key === 'ready' ? { ...lane, label: 'Ready to serve / dispatch' } : lane);
 
   const handleStatusChange = useCallback(
     async (orderId, payload) => {
@@ -85,7 +74,8 @@ export function OrderWorkflowBoard() {
 
   return (
     <div className="space-y-5">
-      <OrderSummaryBar orders={capabilities.isFood ? boardOrders : orders} />
+      <OrderSummaryBar orders={liveOrders} />
+      <p className="text-xs text-forest-muted">Stage counts describe the orders on this page.</p>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cream-dark bg-white px-4 py-3">
         <div className="flex flex-wrap items-center gap-3">
@@ -102,11 +92,13 @@ export function OrderWorkflowBoard() {
               onChange={(e) => setSoundEnabled(e.target.checked)}
               className="rounded text-forest focus:ring-forest"
             />
+            <WorkflowIcon name="volume" size={18} />
             Sound alerts
           </label>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="sm" onClick={refreshOrders}>
+            <WorkflowIcon name="refresh" />
             Refresh
           </Button>
           {hasActiveAlerts && (
@@ -119,50 +111,7 @@ export function OrderWorkflowBoard() {
 
       {capabilities.isFood && capabilities.kanbanLanes ? (
         <div className="space-y-4">
-          <div className="flex rounded-full bg-cream p-1" role="tablist" aria-label="Order board mode">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeMode === 'delivery'}
-              onClick={() => setMode('delivery')}
-              className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
-                activeMode === 'delivery' ? 'bg-forest text-cream shadow-sm' : 'text-forest-muted hover:text-charcoal'
-              }`}
-            >
-              Pickup &amp; delivery
-              <span className="ml-1.5 tabular-nums opacity-80">({deliveryOrders.length})</span>
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={activeMode === 'dine_in'}
-              onClick={() => setMode('dine_in')}
-              className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
-                activeMode === 'dine_in' ? 'bg-forest text-cream shadow-sm' : 'text-forest-muted hover:text-charcoal'
-              }`}
-            >
-              Dine-in
-              <span className="ml-1.5 tabular-nums opacity-80">({dineInOrders.length})</span>
-            </button>
-          </div>
-
-          {activeMode === 'delivery' ? (
-            <FoodOrderKanban
-              orders={deliveryOrders}
-              lanes={capabilities.kanbanLanes}
-              getNextStatus={capabilities.getNextStatus}
-              onStatusChange={handleStatusChange}
-              store={selectedStore}
-            />
-          ) : (
-            <FoodOrderKanban
-              orders={dineInOrders}
-              lanes={DINE_IN_KANBAN_LANES}
-              getNextStatus={capabilities.getNextStatus}
-              onStatusChange={handleStatusChange}
-              store={selectedStore}
-            />
-          )}
+          <FoodOrderKanban orders={liveOrders} lanes={foodLanes} getNextStatus={capabilities.getNextStatus} onStatusChange={handleStatusChange} store={selectedStore} />
 
           <p className="text-xs text-forest-muted">
             Kitchen staff should use the{' '}
@@ -175,7 +124,7 @@ export function OrderWorkflowBoard() {
       ) : (
         <OrderKanban
           storeId={selectedStoreId}
-          orders={orders}
+          orders={liveOrders}
           onStatusChange={handleStatusChange}
           capabilities={capabilities}
         />

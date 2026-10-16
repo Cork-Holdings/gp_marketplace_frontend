@@ -1,5 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/context/useAuth';
 import { useMarketplace } from '@/lib/context/useMarketplace';
 import { usePermissions } from '@/lib/context/permissions';
@@ -7,6 +8,11 @@ import { useMarketplaceCapabilities } from '@/hooks/useMarketplaceCapabilities';
 import { canAccessNav, hasPermission, PERM } from '@/lib/permissions';
 import { BranchSelector } from '@/(owner)/stores/BranchSelector';
 import { cn } from '@/lib/utils';
+import { useActivityCounts } from '@/hooks/useActivityCounts';
+import { usePaymentMode } from '@/hooks/usePaymentMode';
+import { ActivityBadge } from '@/components/common/ActivityBadge';
+import { PortalFooter } from './PortalFooter';
+import { groupPortalNavigation } from '@/lib/portalNavigation';
 
 type NavItem = {
   label: string;
@@ -14,6 +20,7 @@ type NavItem = {
   end?: boolean;
   icon: ReactNode;
   primary?: boolean;
+  count?: number;
 };
 
 const iconClass = 'h-4 w-4 shrink-0';
@@ -220,10 +227,10 @@ function SidebarNavLink({ item, collapsed }: { item: NavItem; collapsed: boolean
     <NavLink
       to={item.to}
       end={item.end}
-      aria-label={item.label}
+      aria-label={item.count ? `${item.label}, ${item.count} total` : item.label}
       className={({ isActive }) =>
         cn(
-          'group relative flex items-center rounded-lg py-2.5 text-sm font-medium',
+          'group relative flex min-h-11 items-center rounded-lg py-2.5 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-sky',
           'transition-all duration-200 ease-out motion-reduce:transition-none',
           collapsed ? 'justify-center px-2' : 'gap-3 px-3',
           isActive
@@ -242,6 +249,7 @@ function SidebarNavLink({ item, collapsed }: { item: NavItem; collapsed: boolean
         )}
       />
       <span
+        aria-hidden
         className={cn(
           'flex shrink-0 items-center justify-center transition-transform duration-200 ease-out motion-reduce:transition-none',
           'group-hover:scale-110 group-aria-[current=page]:text-sky',
@@ -257,6 +265,7 @@ function SidebarNavLink({ item, collapsed }: { item: NavItem; collapsed: boolean
       >
         {item.label}
       </span>
+      <ActivityBadge count={item.count} className={collapsed ? 'absolute -right-1 -top-1 !bg-sky !text-navy' : 'ml-auto'} />
       {collapsed && (
         <span
           role="tooltip"
@@ -267,7 +276,7 @@ function SidebarNavLink({ item, collapsed }: { item: NavItem; collapsed: boolean
             'group-hover:opacity-100 group-hover:translate-x-0 group-focus-visible:opacity-100 group-focus-visible:translate-x-0',
           )}
         >
-          {item.label}
+          {item.label}{item.count ? ` · ${item.count} total` : ''}
         </span>
       )}
     </NavLink>
@@ -288,7 +297,7 @@ function SidebarToggleButton({ className }: { className?: string }) {
           'hidden h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cream-dark bg-cream/50',
           'text-forest-muted transition-all duration-200 ease-out',
           'hover:border-forest/30 hover:bg-cream hover:text-forest motion-reduce:transition-none',
-          'md:inline-flex',
+          'lg:inline-flex',
           className,
         )}
       >
@@ -311,8 +320,8 @@ function SidebarToggleButton({ className }: { className?: string }) {
         onClick={() => setMobileOpen(true)}
         aria-label="Open navigation menu"
         className={cn(
-          'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg',
-          'text-white/80 transition-colors duration-200 hover:bg-white/10 hover:text-white md:hidden',
+          'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg',
+          'text-forest-muted transition-colors duration-200 hover:bg-cream hover:text-forest lg:hidden',
           className,
         )}
       >
@@ -346,14 +355,30 @@ function SidebarBrand({ brandSubtitle, collapsed }: { brandSubtitle: string; col
 }
 
 function SidebarNavLinks({ items, collapsed }: { items: NavItem[]; collapsed: boolean }) {
+  const groupId = useId();
+  const groups = groupPortalNavigation(items);
   return (
     <nav
-      className="sidebar-nav-scroll flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden overscroll-contain p-3"
+      className="sidebar-nav-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-3"
       aria-label="Primary"
     >
-      {items.map((item, index) => (
-        <div key={item.to} className="sidebar-nav-item" style={{ animationDelay: `${index * 35}ms` }}>
-          <SidebarNavLink item={item} collapsed={collapsed} />
+      {groups.map((group, index) => (
+        <div key={group.id} role="group" aria-labelledby={group.label ? `${groupId}-${group.id}` : undefined} className={index ? 'mt-4' : undefined}>
+          {group.label && (
+            <>
+              {collapsed && <div aria-hidden className="mx-2 mb-2 border-t border-white/15" />}
+              <h2 id={`${groupId}-${group.id}`} className={collapsed ? 'sr-only' : 'mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-white/60'}>
+                {group.label}
+              </h2>
+            </>
+          )}
+          <ul className="space-y-0.5">
+            {group.items.map(item => (
+              <li key={item.to} className="sidebar-nav-item" style={{ animationDelay: `${items.indexOf(item) * 35}ms` }}>
+                <SidebarNavLink item={item} collapsed={collapsed} />
+              </li>
+            ))}
+          </ul>
         </div>
       ))}
     </nav>
@@ -422,7 +447,7 @@ function MobileSidebarDrawer({ items, brandSubtitle }: { items: NavItem[]; brand
   if (!mobileOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-40 md:hidden">
+    <div className="fixed inset-0 z-40 lg:hidden">
       <button
         type="button"
         className="sidebar-backdrop absolute inset-0 bg-charcoal/40 backdrop-blur-[2px]"
@@ -462,7 +487,7 @@ function GeepayLogo({ className = 'h-9 w-9' }) {
     // >
     //   <svg viewBox="0 0 40 40" className="h-5 w-5" fill="none">
     //     <circle cx="20" cy="20" r="14" stroke="#D1D2EF" strokeWidth="2" />
-    //     <path d="M20 8a12 12 0 0 1 0 24" fill="#00afeb" stroke="#D1D2EF" strokeWidth="1.5" />
+    //     <path d="M20 8a12 12 0 0 1 0 24" fill="#30C5F4" stroke="#D1D2EF" strokeWidth="1.5" />
     //     <circle cx="20" cy="20" r="4" fill="#ECECF8" />
     //   </svg>
     // </div>
@@ -505,11 +530,12 @@ function AccountMenu({
   }, [open]);
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative shrink-0" ref={ref}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 rounded-xl border border-cream-dark bg-cream/50 px-2 py-1.5 transition hover:border-forest/30"
+        className="flex min-h-11 items-center gap-2 rounded-xl border border-cream-dark bg-cream/50 px-2 py-1.5 transition hover:border-forest/30"
+        aria-label={`${user?.full_name ?? 'Account'}${user?.email ? `, ${user.email}` : ''}`}
         aria-expanded={open}
         aria-haspopup="menu"
       >
@@ -575,15 +601,15 @@ function PortalTopBar({
 }) {
   return (
     <header className="sticky top-0 z-10 border-b border-cream-dark bg-white/90 backdrop-blur-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 md:px-6">
+      <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-2 md:gap-3 md:px-6 md:py-3">
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {showSidebarToggle && <SidebarToggleButton />}
           {showBranch && (
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
               <span className="hidden text-[11px] font-medium uppercase tracking-wide text-forest-muted sm:inline">
                 Branch
               </span>
-              <BranchSelector className="min-w-[10rem] max-w-[16rem]" />
+              <BranchSelector className="w-full min-w-0 max-w-[16rem] min-h-11" />
             </div>
           )}
         </div>
@@ -599,7 +625,7 @@ function SidebarNav({ items, brandSubtitle }: { items: NavItem[]; brandSubtitle:
   return (
     <aside
       className={cn(
-        'sidebar-shell sticky top-0 hidden h-screen max-h-dvh shrink-0 flex-col overflow-hidden border-r border-white/10 bg-navy md:flex',
+        'sidebar-shell sticky top-0 hidden h-screen max-h-dvh shrink-0 flex-col overflow-hidden border-r border-white/10 bg-navy lg:flex',
         'transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] motion-reduce:transition-none',
         collapsed ? 'w-[4.25rem]' : 'w-56',
       )}
@@ -621,15 +647,24 @@ function MobileBottomNav({
 }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
-  const overflowActive = overflow.some((item) =>
+  const moreItems = [...primary.slice(4), ...overflow];
+  const groups = groupPortalNavigation(moreItems);
+  const groupId = useId();
+  const overflowActive = moreItems.some((item) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to),
   );
 
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = () => { if (desktop.matches) setMoreOpen(false); };
+    desktop.addEventListener('change', closeOnDesktop);
+    return () => desktop.removeEventListener('change', closeOnDesktop);
+  }, []);
+
   return (
-    <>
+    <DialogPrimitive.Root open={moreOpen} onOpenChange={setMoreOpen}>
       <nav
-        className="fixed inset-x-0 bottom-0 z-20 border-t border-cream-dark bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm md:hidden"
+        className="relative z-20 shrink-0 border-t border-cream-dark bg-white pb-[env(safe-area-inset-bottom)] lg:hidden"
         aria-label="Primary"
       >
         <ul className="grid grid-cols-5 gap-0">
@@ -644,61 +679,62 @@ function MobileBottomNav({
                   }`
                 }
               >
-                {item.icon}
+                <span className="relative">{item.icon}{item.count ? <ActivityBadge count={item.count} className="absolute -right-3 -top-2 !bg-sky !text-navy" /> : null}</span>
                 <span className="truncate">{item.label}</span>
               </NavLink>
             </li>
           ))}
           <li>
-            <button
-              type="button"
-              onClick={() => setMoreOpen(true)}
-              className={`flex w-full flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium ${
-                overflowActive || moreOpen ? 'text-forest' : 'text-forest-muted'
-              }`}
-            >
-              {Icons.more}
-              <span>More</span>
-            </button>
+            <DialogPrimitive.Trigger asChild>
+              <button
+                type="button"
+                className={`flex w-full flex-col items-center gap-0.5 px-1 py-2 text-[10px] font-medium ${
+                  overflowActive || moreOpen ? 'text-forest' : 'text-forest-muted'
+                }`}
+              >
+                <span aria-hidden>{Icons.more}</span>
+                <span>More</span>
+              </button>
+            </DialogPrimitive.Trigger>
           </li>
         </ul>
       </nav>
 
-      {moreOpen && (
-        <div className="fixed inset-0 z-30 md:hidden">
-          <button
-            type="button"
-            className="absolute inset-0 bg-charcoal/40"
-            aria-label="Close menu"
-            onClick={() => setMoreOpen(false)}
-          />
-          <div className="absolute inset-x-0 bottom-0 rounded-t-2xl border border-cream-dark bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-xl">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-forest-muted">More</p>
-            <ul className="space-y-1">
-              {[...primary.slice(4), ...overflow].map((item) => (
-                <li key={item.to}>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium text-charcoal hover:bg-cream/60"
-                    onClick={() => {
-                      setMoreOpen(false);
-                      navigate(item.to);
-                    }}
-                  >
-                    {item.icon}
-                    {item.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay className="fixed inset-0 z-40 bg-charcoal/40 lg:hidden" />
+        <DialogPrimitive.Content aria-describedby={undefined} className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col overflow-hidden rounded-t-2xl border border-cream-dark bg-white shadow-xl focus:outline-none lg:hidden">
+          <div className="flex shrink-0 items-center justify-between border-b border-cream-dark px-4 py-2">
+            <DialogPrimitive.Title className="text-base font-semibold text-navy">More</DialogPrimitive.Title>
+            <DialogPrimitive.Close className="flex h-11 w-11 items-center justify-center rounded-lg text-forest-muted hover:bg-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-forest" aria-label="Close menu">
+              <svg aria-hidden className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="m6 6 12 12M6 18 18 6" /></svg>
+            </DialogPrimitive.Close>
           </div>
-        </div>
-      )}
-    </>
+          <nav aria-label="More navigation" className="min-h-0 overflow-y-auto overscroll-contain p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            {groups.map((group, index) => (
+              <div key={group.id} role="group" aria-labelledby={group.label ? `${groupId}-${group.id}` : undefined} className={index ? 'mt-4 border-t border-cream-dark pt-4' : undefined}>
+                {group.label && <h2 id={`${groupId}-${group.id}`} className="mb-1 px-3 text-[11px] font-semibold uppercase tracking-[0.1em] text-forest-muted">{group.label}</h2>}
+                <ul className="space-y-1">
+                  {group.items.map(item => (
+                    <li key={item.to}>
+                      <NavLink to={item.to} end={item.end} onClick={() => setMoreOpen(false)} aria-label={item.count ? `${item.label}, ${item.count} total` : item.label}
+                        className={({ isActive }) => cn('flex min-h-11 items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-forest', isActive ? 'bg-forest/10 text-forest' : 'text-charcoal hover:bg-cream/60')}>
+                        <span aria-hidden>{item.icon}</span>
+                        <span className="flex-1">{item.label}</span>
+                        <ActivityBadge count={item.count} className="!bg-navy/10 !text-navy" />
+                      </NavLink>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 }
 
-function buildMerchantNav(isFood: boolean, permissions: Set<string>): { all: NavItem[]; primary: NavItem[]; overflow: NavItem[] } {
+function buildMerchantNav(isFood: boolean, permissions: Set<string>, counts: ReturnType<typeof useActivityCounts>): { all: NavItem[]; primary: NavItem[]; overflow: NavItem[] } {
   const core: NavItem[] = [
     { label: 'Overview', to: '/portal/owner', end: true, icon: Icons.overview, primary: true },
     { label: 'Stores', to: '/portal/owner/stores', icon: Icons.stores, primary: true },
@@ -706,6 +742,10 @@ function buildMerchantNav(isFood: boolean, permissions: Set<string>): { all: Nav
     { label: isFood ? 'Items' : 'Catalog', to: '/portal/owner/products', icon: Icons.catalog, primary: true },
     { label: 'Counter', to: '/portal/owner/counter', icon: Icons.counter, primary: true },
     { label: 'Orders', to: '/portal/owner/orders', icon: Icons.orders, primary: true },
+    { label: 'Quotes', to: '/portal/owner/quotes', icon: Icons.orders, count: counts.quotes },
+    { label: 'Service jobs', to: '/portal/owner/jobs', icon: Icons.orders, count: counts.jobs },
+    { label: 'Bookings', to: '/portal/owner/bookings', icon: Icons.orders, count: counts.bookings },
+    { label: 'Custom orders', to: '/portal/owner/custom-orders', icon: Icons.orders, count: counts.custom },
     { label: 'Transactions', to: '/portal/owner/transactions', icon: Icons.transactions, primary: true },
     { label: 'Team', to: '/portal/owner/team', icon: Icons.team },
     { label: 'Roles', to: '/portal/owner/roles', icon: Icons.roles },
@@ -731,13 +771,17 @@ function buildMerchantNav(isFood: boolean, permissions: Set<string>): { all: Nav
 }
 
 export function PortalLayout() {
+  const location = useLocation();
+  useEffect(() => { document.getElementById('portal-main')?.scrollTo({ top: 0 }); }, [location.pathname]);
+  const simulated = usePaymentMode();
   const { user, logout, isAdmin, isStoreOwner } = useAuth();
   const navigate = useNavigate();
   const { selectedStore } = useMarketplace();
   const { permissions } = usePermissions();
   const capabilities = useMarketplaceCapabilities(selectedStore);
-
-  const merchantNav = buildMerchantNav(capabilities.isFood, permissions);
+  const counts = useActivityCounts('owner', isStoreOwner ? selectedStore?.id : undefined);
+  const merchantNav = buildMerchantNav(capabilities.isFood, permissions, counts);
+  const visibleAdminNav = simulated ? [...adminNav, {label: 'Financial test queue', to: '/portal/admin/settlements', icon: Icons.transactions, primary: true}] : adminNav;
 
   const handleLogout = () => {
     logout();
@@ -745,29 +789,22 @@ export function PortalLayout() {
   };
 
   if (isAdmin) {
-    const primary = adminNav.filter((i) => i.primary);
-    const overflow = adminNav.filter((i) => !i.primary);
+    const primary = visibleAdminNav.filter((i) => i.primary);
+    const overflow = visibleAdminNav.filter((i) => !i.primary);
     return (
       <SidebarProvider>
-        <div className="flex min-h-screen bg-cream">
+        <div className="portal-shell flex h-dvh min-h-0 overflow-hidden bg-cream">
           <a
             href="#portal-main"
             className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-forest focus:shadow"
           >
             Skip to content
           </a>
-          <SidebarNav items={adminNav} brandSubtitle="Admin Portal" />
-          <MobileSidebarDrawer items={adminNav} brandSubtitle="Admin Portal" />
-          <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <div className="flex items-center justify-between border-b border-white/10 bg-navy px-4 py-3 md:hidden">
-              <div className="flex items-center gap-2">
-                <SidebarToggleButton />
-                <GeepayLogo  />
-                <p className="text-sm font-bold text-white">Geepay Admin</p>
-              </div>
-            </div>
+          <SidebarNav items={visibleAdminNav} brandSubtitle="Admin Portal" />
+          <MobileSidebarDrawer items={visibleAdminNav} brandSubtitle="Admin Portal" />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
             <PortalTopBar user={user} onLogout={handleLogout} showSidebarToggle />
-            <main id="portal-main" className="flex-1 overflow-y-auto p-4 pb-24 md:p-6 md:pb-6">
+            <main id="portal-main" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto overscroll-contain focus:outline-none p-4 md:p-6">
               <Outlet />
             </main>
             <MobileBottomNav primary={primary} overflow={overflow} />
@@ -779,7 +816,7 @@ export function PortalLayout() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen bg-cream">
+      <div className="portal-shell flex h-dvh min-h-0 overflow-hidden bg-cream">
         <a
           href="#portal-main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:font-semibold focus:text-forest focus:shadow"
@@ -792,14 +829,7 @@ export function PortalLayout() {
           <MobileSidebarDrawer items={merchantNav.all} brandSubtitle="Merchant Portal" />
         )}
 
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="flex items-center justify-between border-b border-white/10 bg-navy px-4 py-3 md:hidden">
-            <div className="flex items-center gap-2">
-              {isStoreOwner && <SidebarToggleButton />}
-              <GeepayLogo className="h-8 w-8" />
-              <p className="text-sm font-bold text-white">Geepay Merchant</p>
-            </div>
-          </div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
 
           {isStoreOwner && (
             <PortalTopBar
@@ -815,8 +845,11 @@ export function PortalLayout() {
             />
           )}
 
-          <main id="portal-main" className="flex-1 overflow-y-auto p-4 pb-24 md:p-6 md:pb-6">
-            <Outlet />
+          <main id="portal-main" tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto overscroll-contain focus:outline-none p-4 md:p-6">
+            <div className="flex min-h-full min-w-0 flex-col">
+              <div className="min-w-0 flex-1"><Outlet /></div>
+              {isStoreOwner && <PortalFooter />}
+            </div>
           </main>
 
           {isStoreOwner && (

@@ -17,9 +17,9 @@ export default {
             100: '#D1D2EF',
             200: '#A4A5DF',
             300: '#7679CF',
-            DEFAULT: '#383d92',
-            400: '#383d92',
-            500: '#2f3480',
+            DEFAULT: '#257DC1',
+            400: '#257DC1',
+            500: '#1C639A',
             600: '#26296D',
             700: '#1D1F58',
             800: '#141644',
@@ -31,8 +31,8 @@ export default {
             100: '#C2EAFB',
             200: '#85D5F7',
             300: '#47C0F3',
-            DEFAULT: '#00afeb',
-            400: '#00afeb',
+            DEFAULT: '#30C5F4',
+            400: '#30C5F4',
             500: '#009DD4',
             600: '#0089B8',
             700: '#00749A',
@@ -50,8 +50,8 @@ export default {
             600: '#1C2266',
             700: '#131850',
             800: '#0C1040',
-            DEFAULT: '#080C30',
-            950: '#040620',
+            DEFAULT: '#10182B',
+            950: '#0C1220',
           },
           slate: {
             50: '#F7F8FA',
@@ -69,14 +69,14 @@ export default {
 
         // Flat aliases (existing JSX keeps working)
         cobalt: {
-          DEFAULT: '#383d92',
-          dark: '#2f3480',
+          DEFAULT: '#257DC1',
+          dark: '#1C639A',
           50: '#ECECF8',
           100: '#D1D2EF',
           200: '#A4A5DF',
           300: '#7679CF',
-          400: '#383d92',
-          500: '#2f3480',
+          400: '#257DC1',
+          500: '#1C639A',
           600: '#26296D',
           700: '#1D1F58',
           800: '#141644',
@@ -84,13 +84,13 @@ export default {
           950: '#06071C',
         },
         sky: {
-          DEFAULT: '#00afeb',
-          dark: '#0097CC',
+          DEFAULT: '#30C5F4',
+          dark: '#257DC1',
           50: '#E6F7FD',
           100: '#C2EAFB',
           200: '#85D5F7',
           300: '#47C0F3',
-          400: '#00afeb',
+          400: '#30C5F4',
           500: '#009DD4',
           600: '#0089B8',
           700: '#00749A',
@@ -99,8 +99,8 @@ export default {
           950: '#003347',
         },
         navy: {
-          DEFAULT: '#080C30',
-          dark: '#040620',
+          DEFAULT: '#10182B',
+          dark: '#0C1220',
         },
 
         // shadcn/ui tokens
@@ -138,7 +138,7 @@ export default {
           foreground: 'hsl(var(--card-foreground))',
         },
         sidebar: {
-          DEFAULT: '#080C30',
+          DEFAULT: '#10182B',
           foreground: '#ffffff',
           accent: 'hsl(var(--sidebar-accent))',
           'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
@@ -178,7 +178,7 @@ export default {
         },
         forest: {
           DEFAULT: 'hsl(var(--primary))',
-          dark: '#2f3480',
+          dark: '#1C639A',
           muted: 'hsl(var(--muted-foreground))',
         },
         charcoal: 'hsl(var(--foreground))',
@@ -242,12 +242,12 @@ export default {
         lg: '0 12px 16px -4px rgba(8, 12, 48, 0.09), 0 4px 6px -2px rgba(8, 12, 48, 0.04)',
         xl: '0 20px 24px -4px rgba(8, 12, 48, 0.09), 0 8px 8px -4px rgba(8, 12, 48, 0.04)',
         '2xl': '0 24px 48px -12px rgba(8, 12, 48, 0.18)',
-        'focus-cobalt': '0 0 0 3px rgba(56, 61, 146, 0.22)',
-        'focus-sky': '0 0 0 3px rgba(0, 175, 235, 0.22)',
+        'focus-cobalt': '0 0 0 3px rgba(37, 125, 193, 0.22)',
+        'focus-sky': '0 0 0 3px rgba(48, 197, 244, 0.22)',
         'focus-error': '0 0 0 3px rgba(239, 68, 68, 0.22)',
-        'glow-cobalt': '0 4px 24px rgba(56, 61, 146, 0.28)',
-        'glow-sky': '0 4px 24px rgba(0, 175, 235, 0.24)',
-        'btn-flat': '0 1px 2px rgba(56, 61, 146, 0.12), 0 2px 8px rgba(56, 61, 146, 0.10)',
+        'glow-cobalt': '0 4px 24px rgba(37, 125, 193, 0.28)',
+        'glow-sky': '0 4px 24px rgba(48, 197, 244, 0.24)',
+        'btn-flat': '0 1px 2px rgba(37, 125, 193, 0.12), 0 2px 8px rgba(37, 125, 193, 0.10)',
         'dark-sm': '0 1px 3px rgba(0, 0, 0, 0.35)',
         'dark-md': '0 4px 12px rgba(0, 0, 0, 0.40)',
         'dark-lg': '0 12px 28px rgba(0, 0, 0, 0.50)',
@@ -255,7 +255,7 @@ export default {
 
       backgroundImage: {
         // Kept for charts / branded surfaces — never for primary buttons
-        'brand-gradient': 'linear-gradient(135deg, #383d92 0%, #2b6fc2 50%, #00afeb 100%)',
+        'brand-gradient': 'linear-gradient(135deg, #257DC1 0%, #2b6fc2 50%, #30C5F4 100%)',
       },
 
       keyframes: {
@@ -285,9 +285,9 @@ export default {
           '100%': { backgroundPosition: '-200% 0' },
         },
         'pulse-ring': {
-          '0%': { boxShadow: '0 0 0 0 rgba(0, 175, 235, 0.4)' },
-          '70%': { boxShadow: '0 0 0 8px rgba(0, 175, 235, 0)' },
-          '100%': { boxShadow: '0 0 0 0 rgba(0, 175, 235, 0)' },
+          '0%': { boxShadow: '0 0 0 0 rgba(48, 197, 244, 0.4)' },
+          '70%': { boxShadow: '0 0 0 8px rgba(48, 197, 244, 0)' },
+          '100%': { boxShadow: '0 0 0 0 rgba(48, 197, 244, 0)' },
         },
         'shimmer-gradient': {
           '0%': { backgroundPosition: '-200% 0' },

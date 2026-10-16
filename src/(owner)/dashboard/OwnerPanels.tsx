@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { PHYSICAL_GOODS_KANBAN_LANES } from '@/lib/workflows';
 import { ownerApi } from '@/lib/api/services';
 import { normalizeOrderList, normalizeStoreList } from '@/lib/normalizeApi';
 import { useAsync } from '@/hooks/useAsync';
@@ -9,6 +10,9 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { useConfirm } from '@/hooks/useConfirm';
+import { WorkflowIcon } from '@/components/common/WorkflowIcon';
+import { OrderBoardEmpty } from '@/components/common/OrderBoardVisuals';
+import { orderLaneIcon } from '@/lib/orderBoardIcons';
 
 export function StoreSelector({ storeId, onSelect }) {
   const { data, loading, error, retry } = useAsync(() => ownerApi.listStores(), []);
@@ -136,14 +140,16 @@ export function ProductTable({ storeId, listOnly = false, onRequestCreate }) {
   );
 }
 
-const ORDER_COLUMNS = [
-  { key: 'pending_payment', label: 'Pending Payment', color: 'border-amber-400' },
-  { key: 'paid', label: 'Paid', color: 'border-blue-400' },
-  { key: 'fulfilled', label: 'Fulfilled', color: 'border-green-400' },
-  { key: 'cancelled', label: 'Cancelled', color: 'border-gray-400' },
-];
+const NEXT_ACTION_LABELS = {
+  paid: 'Confirm payment', packaged: 'Pack order', dispatched: 'Dispatch order',
+  arrived: 'Mark arrived', completed: 'Complete order', assigned: 'Assign order',
+  scheduled: 'Schedule order', in_service: 'Start service', job_in_progress: 'Start work',
+};
 
 export function OrderKanban({ storeId, orders: externalOrders, onStatusChange, capabilities }) {
+  const [actionError, setActionError] = useState(null);
+  const [busyOrder, setBusyOrder] = useState<string | null>(null);
+  const actionLock = useRef(false);
   const { data, loading, error, retry } = useAsync(
     () => (storeId && !externalOrders ? ownerApi.listOrders(storeId) : Promise.resolve([])),
     [storeId, externalOrders],
@@ -151,14 +157,15 @@ export function OrderKanban({ storeId, orders: externalOrders, onStatusChange, c
 
   const orders = externalOrders ?? normalizeOrderList(data);
 
-  const lanes = capabilities?.kanbanLanes ?? ORDER_COLUMNS.map((col) => ({
-    key: col.key,
-    label: col.label,
-    statuses: [col.key],
-    color: col.color,
-  }));
+  const lanes = (capabilities?.kanbanLanes ?? PHYSICAL_GOODS_KANBAN_LANES)
+    .map(lane => ({ ...lane, statuses: lane.statuses.filter(status => !['completed', 'cancelled', 'fulfilled'].includes(status)) }))
+    .filter(lane => lane.statuses.length);
 
   const handleStatusChange = async (orderId, payload) => {
+    if (actionLock.current) return;
+    actionLock.current = true;
+    setBusyOrder(orderId);
+    setActionError(null);
     const body = typeof payload === 'string' ? { status: payload } : payload;
     try {
       if (onStatusChange) {
@@ -167,8 +174,11 @@ export function OrderKanban({ storeId, orders: externalOrders, onStatusChange, c
         await ownerApi.updateOrderStatus(storeId, orderId, body);
         retry();
       }
-    } catch {
-      /* silent */
+    } catch (err) {
+      setActionError(err);
+    } finally {
+      actionLock.current = false;
+      setBusyOrder(null);
     }
   };
 
@@ -194,38 +204,43 @@ export function OrderKanban({ storeId, orders: externalOrders, onStatusChange, c
     cancelled: 'border-t-gray-400',
   };
 
+  if (orders.length === 0) return <OrderBoardEmpty lanes={lanes} />;
+
   return (
-    <div className="flex gap-4 overflow-x-auto pb-2">
+    <div className="space-y-3">
+      {actionError && <ErrorState error={actionError} />}
+      <div className="order-stage-grid" aria-label="Order stages">
       {lanes.map((lane) => {
         const laneOrders = grouped[lane.key] ?? [];
         return (
           <div
             key={lane.key}
-            className={`flex w-[min(100%,22rem)] shrink-0 flex-col rounded-2xl border border-cream-dark border-t-4 bg-cream/40 ${lane.color ?? laneColors[lane.key] ?? 'border-t-forest'}`}
+            className={`order-stage-lane flex min-w-0 flex-col rounded-xl border border-cream-dark border-t-[3px] bg-cream/40 ${lane.color ?? laneColors[lane.key] ?? 'border-t-forest'}`}
           >
-            <div className="sticky top-0 z-10 rounded-t-2xl border-b border-cream-dark bg-white/95 px-4 py-3 backdrop-blur-sm">
-              <h3 className="flex items-center justify-between text-sm font-semibold text-charcoal">
-                <span>{lane.label}</span>
+            <div className="rounded-t-xl border-b border-cream-dark bg-white px-4 py-3">
+              <h3 className="flex items-center justify-between gap-2 text-sm font-semibold text-charcoal">
+                <span className="flex min-w-0 items-center gap-2"><WorkflowIcon name={orderLaneIcon(lane.key)} size={18} />{lane.label}</span>
                 <span className="rounded-full bg-cream px-2.5 py-0.5 text-xs font-bold tabular-nums text-forest">
                   {laneOrders.length}
                 </span>
               </h3>
             </div>
-            <ul className="min-h-[12rem] max-h-[calc(100vh-18rem)] space-y-3 overflow-y-auto p-3">
+            <ul className="space-y-3 p-3">
               {laneOrders.length === 0 ? (
-                <li className="rounded-xl border border-dashed border-cream-dark bg-white/60 px-4 py-10 text-center text-sm text-forest-muted">
+                <li className="flex flex-col items-center gap-2 px-4 py-6 text-center text-sm text-forest-muted">
+                  <WorkflowIcon name={orderLaneIcon(lane.key)} size={24} />
                   No orders in this stage
                 </li>
               ) : (
                 laneOrders.map((order) => {
-                  const next = capabilities?.getNextStatus?.(order.status ?? 'pending_payment')?.[0];
+                  const next = order.status === 'pending_payment' ? undefined : capabilities?.getNextStatus?.(order.status ?? 'pending_payment', order.fulfillment_type)?.[0];
                   return (
                     <li
                       key={order.id}
                       className="rounded-xl border border-cream-dark bg-white p-4 text-sm shadow-sm"
                     >
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0 break-words">
                           <p className="text-base font-bold text-charcoal">
                             #{order.order_number ?? order.id?.slice(0, 8)}
                           </p>
@@ -248,19 +263,19 @@ export function OrderKanban({ storeId, orders: externalOrders, onStatusChange, c
                       <p className="mt-3 border-b border-cream-dark pb-3 text-lg font-bold tabular-nums text-charcoal">
                         {formatCurrency(order.total ?? order.total_amount, order.currency)}
                       </p>
-                      {order.notes && (
-                        <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
-                          {order.notes}
-                        </p>
-                      )}
+                      <p className="mt-3 flex items-center gap-2 text-xs font-semibold text-forest-muted"><WorkflowIcon name={order.fulfillment_type === 'delivery' ? 'truck' : 'package'} size={16} />{order.fulfillment_type === 'delivery' ? 'Delivery' : 'Pickup'}</p>
+                      {order.delivery_address && <p className="mt-1 break-words text-sm text-charcoal">{[order.delivery_address.line1, order.delivery_address.city].filter(Boolean).join(', ')}</p>}
+                      {order.notes && <details className="mt-2 text-sm"><summary className="cursor-pointer text-forest">Order note</summary><p className="mt-1 break-words">{order.notes}</p></details>}
+                      {order.status === 'pending_payment' && <p className="mt-2 text-xs text-forest-muted">Waiting for verified payment before this order can proceed.</p>}
                       {next && (
                         <Button
                           type="button"
                           size="sm"
                           className="mt-4 w-full"
+                          disabled={busyOrder !== null}
                           onClick={() => handleStatusChange(order.id, { status: next })}
                         >
-                          Advance order
+                          {busyOrder === order.id ? 'Updating…' : NEXT_ACTION_LABELS[next] ?? 'Advance order'}
                         </Button>
                       )}
                     </li>
@@ -271,6 +286,7 @@ export function OrderKanban({ storeId, orders: externalOrders, onStatusChange, c
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

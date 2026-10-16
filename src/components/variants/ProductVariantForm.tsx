@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ATTRIBUTE_TYPES } from '@/lib/validations/variantSchema';
 import { ErrorState } from '@/components/common/ErrorState';
+import { defaultPurchaseFlow, type PurchaseFlow } from '@/lib/purchaseFlow';
+import { CataloguePhotoField } from './CataloguePhotoField';
 
 const DEFAULT_ATTR = { key: '', label: '', type: ATTRIBUTE_TYPES.SELECT, options: [''] };
 
@@ -13,6 +15,7 @@ export function ProductVariantForm({
   onSubmit,
   submitting,
   category,
+  storeType,
   embedded = false,
   error = null,
   initial = null,
@@ -20,6 +23,9 @@ export function ProductVariantForm({
   const [name, setName] = useState('');
   const [sku, setSku] = useState('');
   const [price, setPrice] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
+  const [purchaseFlow, setPurchaseFlow] = useState(() => defaultPurchaseFlow(category, storeType));
   const [variantMode, setVariantMode] = useState('simple');
   const [attributes, setAttributes] = useState([]);
   const [variants, setVariants] = useState([{ sku: '', price: '', stock_quantity: '', attributes: {} }]);
@@ -32,8 +38,11 @@ export function ProductVariantForm({
     setName(initial.name ?? '');
     setSku(initial.sku ?? '');
     setPrice(initial.price != null ? String(initial.price) : '');
+    setPurchaseFlow(initial.purchase_flow ?? defaultPurchaseFlow(category, storeType));
     setVariantMode(initial.variant_mode === 'custom' ? 'matrix' : 'simple');
-  }, [initial]);
+    setImageFile(null);
+    setRemoveImage(false);
+  }, [initial, category, storeType]);
 
   const addAttribute = () => setAttributes((a) => [...a, { ...DEFAULT_ATTR, key: `attr_${a.length + 1}` }]);
 
@@ -47,12 +56,15 @@ export function ProductVariantForm({
         name,
         sku: sku.trim(),
         price,
-      });
+        purchase_flow: purchaseFlow,
+        ...(removeImage && !imageFile ? { image_url: '' } : {}),
+      }, imageFile);
       return;
     }
 
     const payload = {
       name,
+      purchase_flow: purchaseFlow,
       sku: sku.trim(),
       variant_mode: variantMode,
       variants: variants.map((v) => ({
@@ -78,7 +90,7 @@ export function ProductVariantForm({
         },
       ];
     }
-    onSubmit?.(payload);
+    onSubmit?.(payload, imageFile);
   };
 
   return (
@@ -88,6 +100,17 @@ export function ProductVariantForm({
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label htmlFor="purchase-flow" className="mb-1 block text-xs font-medium text-forest-muted">What happens when a customer selects this item?</label>
+          <select id="purchase-flow" value={purchaseFlow} onChange={(e) => setPurchaseFlow(e.target.value as PurchaseFlow)} className="field-input">
+            <option value="checkout">Add to cart · ready to sell now</option>
+            <option value="booking">Book an appointment · choose a time</option>
+            <option value="quote">Arrange an assessment · price after review</option>
+            <option value="custom_request">Request customization · agree a price first</option>
+            <option value="wholesale">Request bulk quantity · agree a price first</option>
+          </select>
+          <p className="mt-1 text-xs text-forest-muted">Customers only see the next step that fits this item. Appointment services need a priced service and available resource in Bookings.</p>
+        </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-forest-muted">Name</label>
           <input required value={name} onChange={(e) => setName(e.target.value)} className="field-input" />
@@ -186,6 +209,8 @@ export function ProductVariantForm({
           ))}
         </div>
       )}
+
+      <CataloguePhotoField file={imageFile} existingUrl={initial?.image_url} removed={removeImage} disabled={submitting} onChange={setImageFile} onRemove={() => setRemoveImage(true)} />
 
       {error && <ErrorState error={error} />}
 

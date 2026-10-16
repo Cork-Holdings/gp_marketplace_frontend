@@ -4,13 +4,15 @@ import { StoreCategoryBadge } from '../stores/BranchSelector';
 import { OrderWorkflowBoard } from './OrderWorkflowBoard';
 import { RealtimeOrderProvider } from '@/lib/context/realtime-order';
 import { useMarketplace } from '@/lib/context/useMarketplace';
+import { WorkflowPageHeader } from '@/components/common/WorkflowVisuals';
+import { OrderWorkspace } from './OrderWorkspace';
 
 function OrdersContent() {
   const { selectedStoreId } = useMarketplace();
 
   return (
-    <RealtimeOrderProvider storeId={selectedStoreId} enabled={Boolean(selectedStoreId)}>
-      <OrderWorkflowBoard />
+    <RealtimeOrderProvider key={selectedStoreId} storeId={selectedStoreId} enabled={Boolean(selectedStoreId)}>
+      <OrderWorkspace><OrderWorkflowBoard /></OrderWorkspace>
     </RealtimeOrderProvider>
   );
 }
@@ -21,17 +23,7 @@ export default function MerchantOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-charcoal">Orders</h1>
-            <p className="mt-1 max-w-xl text-sm leading-relaxed text-forest-muted">
-              Track live orders, see item details at a glance, and advance each order through your workflow.
-            </p>
-          </div>
-          <StoreCategoryBadge />
-        </div>
-      </header>
+      <WorkflowPageHeader kind="order" eyebrow="Daily work" title="Orders" description="Keep every order moving. See what's new, what's being prepared and what's ready to hand over."><div className="mt-3"><StoreCategoryBadge /></div></WorkflowPageHeader>
       <OrdersContent />
     </div>
   );

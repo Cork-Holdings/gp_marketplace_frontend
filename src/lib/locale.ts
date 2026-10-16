@@ -2,7 +2,7 @@
 export const DEFAULT_COUNTRY_CODE = 'ZM';
 export const DEFAULT_COUNTRY_LABEL = 'Zambia';
 export const DEFAULT_CURRENCY = 'ZMW';
-export const DEFAULT_PHONE_PLACEHOLDER = '+260971234567';
+export const DEFAULT_PHONE_PLACEHOLDER = 'e.g. 0961234567';
 export const DEFAULT_LOCALE = 'en-ZM';
 
 export const COUNTRY_OPTIONS = [

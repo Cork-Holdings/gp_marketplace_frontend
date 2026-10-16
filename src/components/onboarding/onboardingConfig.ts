@@ -51,15 +51,15 @@ export const INITIAL_MERCHANT_FORM = {
 };
 
 export const USER_FILE_FIELDS = [
-  { key: 'national_id', label: 'National ID', hint: 'PDF, JPG or PNG' },
-  { key: 'passport', label: 'Passport (optional)', hint: 'PDF, JPG or PNG', optional: true },
-  { key: 'selfie', label: 'Selfie verification', hint: 'Clear photo of your face' },
+  { key: 'national_id', label: 'NRC (National Registration Card)', hint: 'A clear photo or scan of your NRC. PDF, JPG or PNG.', optional: true },
+  { key: 'passport', label: 'Passport', hint: 'PDF, JPG or PNG', optional: true },
+  { key: 'selfie', label: 'Selfie verification', hint: 'Clear photo of your face', optional: true },
 ];
 
 export const KYC_FILE_FIELDS = [
-  { key: 'company_registration', label: 'Company registration', formalOnly: true },
-  { key: 'owner_id', label: 'Owner ID verification', hint: 'KYC owner identity document' },
-  { key: 'structural_approval', label: 'Structural / trade approval', optional: true },
+  { key: 'company_registration', label: 'PACRA registration certificate', hint: 'Certificate of business name registration or company incorporation. PDF, JPG or PNG.', formalOnly: true },
+  { key: 'owner_id', label: 'Owner NRC or passport', hint: 'A clear photo or scan of the business owner\'s NRC or passport.' },
+  { key: 'structural_approval', label: 'Council licence or permit', hint: 'If you have one, upload a council-issued business licence, fire certificate or premises approval. Otherwise, leave this blank.', optional: true },
 ];
 
 export function getSelfRegisterSteps(_businessType?: string) {

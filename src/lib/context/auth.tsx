@@ -1,4 +1,5 @@
-import { useReducer, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { userMessage } from '@/lib/userMessage';
+import { useReducer, useEffect, useLayoutEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { configureSecureFetch } from '@/lib/api/crud';
 import { authApi } from '@/lib/api/services';
 import { getStoredToken, setStoredToken, getStoredUser, setStoredUser } from '@/lib/storage';
@@ -65,7 +66,9 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  useEffect(() => {
+  // Child screens fetch in passive effects. Configure authentication first,
+  // including immediately after sign-in, so they never send an empty bearer.
+  useLayoutEffect(() => {
     configureSecureFetch({
       getToken: () => state.token,
       refreshToken: async () => {
@@ -128,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const user = await loginFromResponse(data);
         return user;
       } catch (err: any) {
-        dispatch({ type: 'LOGIN_FAILURE', payload: err.message });
+        dispatch({ type: 'LOGIN_FAILURE', payload: userMessage(err) });
         throw err;
       }
     },
@@ -148,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const user = await loginFromResponse(data);
         return user;
       } catch (err: any) {
-        dispatch({ type: 'LOGIN_FAILURE', payload: err.message });
+        dispatch({ type: 'LOGIN_FAILURE', payload: userMessage(err) });
         throw err;
       }
     },

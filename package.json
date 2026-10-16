@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "test:customer-home": "node --test tests/customerHome.test.mjs",
+    "test:navigation": "node --test tests/portalNavigation.test.mjs",
+    "test:errors": "node --test tests/userMessage.test.mjs",
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",

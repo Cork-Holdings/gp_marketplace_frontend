@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { PhoneInput } from '@/components/shared/PhoneInput';
 
 export interface FileUploadFieldProps {
   id?: string;
@@ -35,7 +36,8 @@ export function FileUploadField({
       <div
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
+        aria-label={`${value ? 'Replace' : 'Upload'} ${label ?? 'document'}`}
+        onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); inputRef.current?.click(); } }}
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => {
           e.preventDefault();
@@ -47,13 +49,14 @@ export function FileUploadField({
           setDragOver(false);
           handleFile(e.dataTransfer.files?.[0]);
         }}
-        className={`cursor-pointer rounded-xl border-2 border-dashed px-4 py-6 text-center transition ${
+        className={`cursor-pointer rounded-xl border-2 border-dashed px-4 py-6 text-center transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-cobalt ${
           dragOver ? 'border-forest bg-sage/30' : 'border-cream-dark bg-cream/40 hover:border-forest-muted'
         }`}
       >
         <input
           ref={inputRef}
           id={id}
+          name={id}
           type="file"
           accept={accept}
           className="sr-only"
@@ -104,6 +107,7 @@ export function BusinessTypeCards({ value, onChange }: BusinessTypeCardsProps) {
           <button
             key={t.id}
             type="button"
+            aria-pressed={active}
             onClick={() => onChange(t.id)}
             className={`relative rounded-2xl border p-4 text-left transition ${
               active
@@ -142,15 +146,18 @@ export function FormField({ label, id, type = 'text', required, value, onChange,
       <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-charcoal">
         {label}
       </label>
-      <input
+      {type === 'tel' ? <PhoneInput id={id} name={id} required={required} value={value} placeholder={placeholder} onChange={event => onChange(event.target.value)} /> : <input
         id={id}
+        name={id}
+        autoComplete={id === 'full_name' ? 'name' : type === 'email' ? 'email' : type === 'tel' ? 'tel' : 'off'}
+        spellCheck={type !== 'email'}
         type={type}
         required={required}
         value={value}
         placeholder={placeholder}
         onChange={(e) => onChange(e.target.value)}
         className="field-input"
-      />
+      />}
       {hint && <p className="mt-1 text-xs text-forest-muted">{hint}</p>}
     </div>
   );
@@ -171,13 +178,13 @@ export interface SelectFieldProps {
   options: SelectFieldOption[];
 }
 
-export function SelectField({ label, id, required: _required, value, onChange, options }: SelectFieldProps) {
+export function SelectField({ label, id, required, value, onChange, options }: SelectFieldProps) {
   return (
     <div>
       <label htmlFor={id} className="mb-1.5 block text-sm font-medium text-charcoal">
         {label}
       </label>
-      <select id={id} value={value} onChange={(e) => onChange(e.target.value)} className="field-input">
+      <select id={id} name={id} required={required} value={value} onChange={(e) => onChange(e.target.value)} className="field-input">
         {options.map((o) => (
           <option key={o.value ?? o.code} value={o.value ?? o.code}>
             {o.label}

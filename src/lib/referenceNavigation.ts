@@ -1,0 +1,105 @@
+export type ReferenceRole = 'owner' | 'admin' | 'customer';
+export type ReferenceMenuItem = {
+  label: string;
+  to: string;
+  icon: string;
+  group: string;
+  comingSoon?: boolean;
+  foodOnly?: boolean;
+  countKey?: 'quotes' | 'jobs' | 'bookings' | 'custom';
+};
+
+export function featurePath(role: ReferenceRole, feature: string) {
+  return `${role === 'customer' ? '/account' : `/portal/${role}`}/coming-soon/${feature}`;
+}
+
+function future(role: ReferenceRole, label: string, feature: string, icon: string, group: string): ReferenceMenuItem {
+  return { label, to: featurePath(role, feature), icon, group, comingSoon: true };
+}
+
+export const ownerReferenceMenu: ReferenceMenuItem[] = [
+  { label: 'Dashboard', to: '/portal/owner', icon: 'home', group: '' },
+  { label: 'Orders', to: '/portal/owner/orders', icon: 'bag', group: 'Daily work' },
+  { label: 'Bookings', to: '/portal/owner/bookings', icon: 'calendar', group: 'Daily work', countKey: 'bookings' },
+  { label: 'Quotes', to: '/portal/owner/quotes', icon: 'document', group: 'Daily work', countKey: 'quotes' },
+  { label: 'Service jobs', to: '/portal/owner/jobs', icon: 'briefcase', group: 'Daily work', countKey: 'jobs' },
+  { label: 'Custom orders', to: '/portal/owner/custom-orders', icon: 'package', group: 'Daily work', countKey: 'custom' },
+  { label: 'Sales & POS', to: '/portal/owner/counter', icon: 'chart', group: 'Daily work' },
+  { label: 'Kitchen', to: '/portal/owner/kitchen', icon: 'flame', group: 'Daily work', foodOnly: true },
+  { label: 'Transactions', to: '/portal/owner/transactions', icon: 'wallet', group: 'Money' },
+  future('owner', 'Accounting', 'accounting', 'document', 'Money'),
+  future('owner', 'Financing', 'financing', 'coins', 'Money'),
+  { label:'Subscription Plan', to:'/portal/owner/plans',icon:'layers',group:'Money' },
+  { label: 'Products & Services', to: '/portal/owner/products', icon: 'package', group: 'Business setup' },
+  { label: 'Inventory', to: '/portal/owner/inventory', icon: 'layers', group: 'Business setup' },
+  { label: 'Stores', to: '/portal/owner/stores', icon: 'store', group: 'Business setup' },
+  { label: 'Branding', to: '/portal/owner/store-settings', icon: 'image', group: 'Business setup' },
+  { label: 'Menu', to: '/portal/owner/menu', icon: 'list', group: 'Business setup', foodOnly: true },
+  { label: 'Tables', to: '/portal/owner/tables', icon: 'grid', group: 'Business setup', foodOnly: true },
+  future('owner', 'Website', 'website', 'monitor', 'Business setup'),
+  { label: 'Team', to: '/portal/owner/team', icon: 'users', group: 'Team & access' },
+  { label: 'Roles', to: '/portal/owner/roles', icon: 'shield', group: 'Team & access' },
+  future('owner', 'Employees (HR)', 'hr', 'users', 'Team & access'),
+  future('owner', 'Customers (CRM)', 'crm', 'users', 'Growth & insights'),
+  future('owner', 'Marketing', 'marketing', 'megaphone', 'Growth & insights'),
+  future('owner', 'Analytics', 'analytics', 'chart', 'Growth & insights'),
+  future('owner', 'Business Services', 'business-services', 'grid', 'Growth & insights'),
+  future('owner', 'Settings', 'settings', 'settings', 'Account'),
+];
+
+export const adminReferenceMenu: ReferenceMenuItem[] = [
+  { label: 'Dashboard', to: '/portal/admin', icon: 'home', group: '' },
+  { label: 'Orders', to: '/portal/admin/orders', icon: 'document', group: 'Operations' },
+  { label: 'Merchants', to: '/portal/admin/merchants', icon: 'users', group: 'Operations' },
+  { label: 'Onboard Merchant', to: '/portal/admin/merchants/new', icon: 'plus', group: 'Operations' },
+  { label: 'All Stores', to: '/portal/admin/stores', icon: 'store', group: 'Operations' },
+  future('admin', 'Customers', 'customers', 'users', 'Operations'),
+  future('admin', 'Products & Services', 'products', 'package', 'Catalog'),
+  future('admin', 'Categories', 'categories', 'grid', 'Catalog'),
+  future('admin', 'Marketing & Promotions', 'marketing', 'megaphone', 'Growth'),
+  future('admin', 'Payments & Settlements', 'settlements', 'wallet', 'Money'),
+  future('admin', 'Commissions & Revenue', 'revenue', 'coins', 'Money'),
+  future('admin', 'Reviews & Disputes', 'disputes', 'message', 'Trust & support'),
+  { label: 'KYC Review', to: '/portal/admin/kyc', icon: 'shield', group: 'Trust & support' },
+  future('admin', 'Risk & Compliance', 'risk', 'shield', 'Trust & support'),
+  future('admin', 'Analytics & Reports', 'analytics', 'chart', 'Intelligence'),
+  future('admin', 'Geographic Analytics', 'geographic', 'globe', 'Intelligence'),
+  future('admin', 'Financing Pipeline', 'financing', 'coins', 'Ecosystem'),
+  future('admin', 'Enterprise Enablement', 'enterprise', 'briefcase', 'Ecosystem'),
+  future('admin', 'System Management', 'system', 'settings', 'Administration'),
+  { label: 'Platform Admins', to: '/portal/admin/admins/new', icon: 'users', group: 'Administration' },
+  { label:'Subscription plans',to:'/portal/admin/plans',icon:'layers',group:'Administration' },
+  { label:'Marketplace manager',to:'/portal/admin/marketplace',icon:'store',group:'Administration' },
+  { label:'Website pages',to:'/portal/admin/pages',icon:'document',group:'Administration' },
+  future('admin', 'Settings', 'settings', 'settings', 'Administration'),
+];
+
+export const marketplaceReferenceCategories = [
+  { id: 'products', label: 'Products', icon: 'cart', tone: 'mint' },
+  { id: 'food', label: 'Food', icon: 'cutlery', tone: 'peach' },
+  { id: 'services', label: 'Services', icon: 'scissors', tone: 'pink' },
+  { id: 'automotive', label: 'Automotive', icon: 'car', tone: 'blue' },
+  { id: 'education', label: 'Education', icon: 'education', tone: 'violet' },
+  { id: 'health', label: 'Health', icon: 'heart', tone: 'rose' },
+  { id: 'home', label: 'Home', icon: 'home', tone: 'gold' },
+  { id: 'events', label: 'Events', icon: 'ticket', tone: 'sky' },
+  { id: 'professional', label: 'Professional', icon: 'briefcase', tone: 'peach' },
+] as const;
+
+export function groupReferenceMenu(items: ReferenceMenuItem[]) {
+  const groups: { label: string; items: ReferenceMenuItem[] }[] = [];
+  for (const item of items) {
+    let group = groups.find(value => value.label === item.group);
+    if (!group) { group = { label: item.group, items: [] }; groups.push(group); }
+    group.items.push(item);
+  }
+  return groups;
+}
+
+export function referenceActive(path: string, to: string) {
+  const base = to.split('?')[0];
+  if (['/portal/owner', '/portal/admin', '/account'].includes(base)) return path === base || path === `${base}/`;
+  // A dedicated onboarding entry must not activate the merchant-directory link too.
+  if (base === '/portal/admin/merchants') return path === base;
+  return path === base || path.startsWith(`${base}/`);
+}

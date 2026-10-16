@@ -38,6 +38,7 @@ export function ConfirmDialog({
   onCancel,
 }: ConfirmDialogProps) {
   const titleId = useId();
+  const descriptionId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [typed, setTyped] = useState('');
 
@@ -56,15 +57,15 @@ export function ConfirmDialog({
     <Dialog
       open={open}
       onOpenChange={(next) => {
-        if (!next) onCancel();
+        if (!next && !busy) onCancel();
       }}
     >
-      <DialogContent size="sm" aria-labelledby={titleId}>
+      <DialogContent size="sm" aria-labelledby={titleId} aria-describedby={description ? descriptionId : undefined} onEscapeKeyDown={event => { if (busy) event.preventDefault(); }} onPointerDownOutside={event => { if (busy) event.preventDefault(); }}>
         <DialogHeader>
           <DialogTitle id={titleId}>{title}</DialogTitle>
         </DialogHeader>
         <DialogBody>
-          {description && <p className="text-sm text-forest-muted">{description}</p>}
+          {description && <p id={descriptionId} className="text-sm leading-relaxed text-forest-muted">{description}</p>}
           {requireText && (
             <div className="mt-4">
               <label htmlFor={`${titleId}-confirm`} className="mb-1 block text-xs font-medium text-forest-muted">
@@ -90,6 +91,7 @@ export function ConfirmDialog({
             size="sm"
             onClick={onConfirm}
             disabled={busy || !canConfirm}
+            aria-busy={busy}
           >
             {busy ? 'Working…' : confirmLabel}
           </Button>

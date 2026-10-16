@@ -1,0 +1,78 @@
+/* Shared workflow visuals use the existing GeePay brand and semantic tokens. */
+.workflow-visual-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.workflow-visual-header-copy { min-width: 0; flex: 1; }
+.workflow-visual-header-copy h1 { overflow-wrap: anywhere; }
+.workflow-visual-header-copy h1 { text-wrap: balance; }
+.booking-toolbar label { display: inline-flex; align-items: center; gap: 8px; }
+.account-shell #account-main { scroll-padding-block: 16px 80px; }
+.workflow-artwork { display: block; flex: 0 0 auto; width: 128px; height: 96px; color: var(--gp-cobalt); }
+.workflow-header .workflow-visual-description { max-width: 65ch; margin: 10px 0 0; color: hsl(var(--muted-foreground)); font-size: 15px; line-height: 1.6; }
+.workflow-record-glyph { display: inline-grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; border-radius: 10px; background: var(--gp-cobalt-light); color: var(--gp-cobalt); }
+.workflow-card-type { display: inline-flex; min-width: 0; align-items: center; gap: 10px; }
+.workflow-record-meta { display: flex; min-width: 0; align-items: flex-start; gap: 7px; color: hsl(var(--muted-foreground)); font-size: 13px; line-height: 1.5; }
+.workflow-record-meta > svg { margin-top: 2px; color: var(--gp-cobalt); opacity: .8; }
+.workflow-record-meta > span { min-width: 0; overflow-wrap: anywhere; }
+.workflow-visual-card { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 18px; }
+.workflow-visual-card > .workflow-summary-top { flex-wrap: wrap; gap: 10px; }
+.workflow-visual-card .workflow-summary-top small { font-size: 12px; white-space: normal; line-height: 1.4; }
+.workflow-visual-card > strong { min-height: 42px; margin: 2px 0 0; font-size: 16px; line-height: 1.4; }
+.workflow-visual-card > .workflow-summary-bottom { width: 100%; align-self: auto; flex-wrap: wrap; margin-top: auto; padding-top: 14px; gap: 8px 12px; font-size: 13px; }
+.workflow-visual-card .workflow-summary-bottom > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.workflow-mini-progress { display: grid; gap: 6px; padding-top: 5px; font-size: 12px; line-height: 1.4; color: hsl(var(--muted-foreground)); }
+.workflow-mini-progress-bars { display: flex; gap: 4px; }
+.workflow-mini-progress-bars > span { flex: 1; height: 4px; border-radius: 2px; background: hsl(var(--border)); }
+.workflow-mini-progress-bars > .is-reached { background: var(--gp-cobalt); }
+.workflow-mini-progress.is-issue { color: var(--warning-fg); }
+.workflow-mini-progress.is-issue .is-reached { background: var(--warning); }
+.workflow-visual-empty { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 32px 24px; }
+.workflow-visual-empty h3 { margin: 0; color: hsl(var(--foreground)); font-size: 17px; font-weight: 650; }
+.workflow-visual-empty p { max-width: 48ch; margin: 7px 0 0; line-height: 1.6; }
+.workflow-visual-empty .workflow-primary { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; text-decoration: none; }
+.booking-agenda { max-width: none; }
+.booking-day[data-today="true"] { border-color: var(--gp-cobalt); }
+.booking-day[data-today="true"] .booking-day-date { background: var(--gp-cobalt); border-color: var(--gp-cobalt); color: white; }
+.booking-agenda-time { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; flex-basis: 80px; font-size: 13px; }
+.booking-agenda-summary strong { font-size: 14px; }
+.booking-agenda-summary small { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.booking-agenda-meta { display: grid; gap: 7px; justify-items: end; }
+.booking-agenda-meta small { color: var(--gp-cobalt); font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.customer-order-list > li + li { border-top: 1px solid hsl(var(--border)); }
+.customer-order-link { display: flex; align-items: center; gap: 18px; padding: 20px 24px; color: hsl(var(--foreground)); text-decoration: none; }
+.customer-order-link:hover { background: hsl(var(--muted)); }
+.customer-order-link:focus-visible { outline: 3px solid var(--gp-cobalt); outline-offset: -3px; }
+.customer-order-copy { display: grid; min-width: 0; flex: 1; gap: 6px; }
+.customer-order-copy > strong { margin-bottom: 2px; overflow-wrap: anywhere; }
+.customer-order-value { display: grid; flex: 0 0 auto; justify-items: end; gap: 8px; }
+.customer-order-value > strong { font-size: 17px; font-variant-numeric: tabular-nums; }
+.customer-order-value > span:last-child { display: inline-flex; align-items: center; gap: 8px; color: var(--gp-cobalt); font-size: 13px; font-weight: 650; }
+.order-stage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 16px; align-items: start; }
+.order-stage-lane { overflow-wrap: anywhere; }
+.order-board-empty { border: 1px solid hsl(var(--border)); border-radius: 16px; background: hsl(var(--card)); padding: 24px; }
+.order-board-empty-intro { display: flex; align-items: center; gap: 24px; max-width: 720px; margin: 0 auto 24px; }
+.order-board-empty-intro h2 { margin: 0 0 8px; color: hsl(var(--foreground)); font-size: 20px; font-weight: 650; }
+.order-board-empty-intro p { margin: 0; color: hsl(var(--muted-foreground)); font-size: 14px; line-height: 1.6; }
+.order-board-empty-stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.order-board-empty-stages li { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 14px 12px; border-radius: 8px; background: hsl(var(--muted)); color: var(--gp-cobalt); font-size: 13px; font-weight: 550; }
+@media (max-width: 767px) {
+  .workflow-visual-header { gap: 12px; align-items: flex-start; }
+  .workflow-visual-header > .workflow-artwork { width: 72px; height: 64px; }
+  .workflow-header .workflow-visual-description { font-size: 14px; }
+  .workflow-visual-card { padding: 16px; }
+  .workflow-visual-card > strong { min-height: 0; }
+  .workflow-record-meta { font-size: 14px; }
+  .booking-agenda-item { grid-template-columns: 64px minmax(0, 1fr) 14px; }
+  .booking-agenda-item > .booking-agenda-meta { grid-column: 2; grid-row: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-self: start; }
+  .booking-agenda-summary small { align-items: flex-start; line-height: 1.5; }
+  .booking-agenda-summary small > svg { margin-top: 2px; }
+  .customer-order-link { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: start; gap: 12px; padding: 18px 16px; }
+  .customer-order-value { grid-column: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding-top: 8px; }
+  .customer-order-value > span:last-child { min-height: 32px; }
+  .workflow-visual-empty, .order-board-empty-intro { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .workflow-visual-empty { padding: 24px 16px; }
+  .order-board-empty { padding: 20px 16px; }
+  .order-board-empty-stages { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workflow-visual-card { transition: none; }
+  .workflow-visual-card:hover { transform: none; }
+}

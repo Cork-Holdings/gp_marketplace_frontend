@@ -9,6 +9,7 @@ export interface ProductVariant {
 
 export interface Product {
   id: string;
+  purchase_flow?: 'checkout' | 'booking' | 'custom_request' | 'wholesale' | 'quote';
   store_id?: string;
   name: string;
   description?: string | null;

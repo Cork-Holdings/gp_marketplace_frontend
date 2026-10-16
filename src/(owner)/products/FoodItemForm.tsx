@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/common/ErrorState';
-import { FileUploadField } from '@/components/onboarding/OnboardingFields';
+import { CataloguePhotoField } from '@/components/variants/CataloguePhotoField';
 import type { Product } from '@/types/product';
 
 /** High stock so checkout reservation still works; restaurants use availability, not inventory. */
@@ -34,7 +34,7 @@ export function FoodItemForm({
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [sku, setSku] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [removeImage, setRemoveImage] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [categoryId, setCategoryId] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -46,7 +46,7 @@ export function FoodItemForm({
       setDescription('');
       setPrice('');
       setSku('');
-      setImageUrl('');
+      setRemoveImage(false);
       setImageFile(null);
       setCategoryId('');
       setIsActive(true);
@@ -57,22 +57,12 @@ export function FoodItemForm({
     setDescription(initial.description ?? '');
     setPrice(initial.price != null ? String(initial.price) : '');
     setSku(initial.sku ?? '');
-    setImageUrl(initial.image_url ?? '');
+    setRemoveImage(false);
     setImageFile(null);
     setCategoryId(initial.menu_category_id ?? '');
     setIsActive(initial.is_active !== false);
     setShowAdvanced(Boolean(initial.sku));
   }, [initial]);
-
-  const previewUrl = useMemo(() => {
-    if (imageFile) return URL.createObjectURL(imageFile);
-    return imageUrl || null;
-  }, [imageFile, imageUrl]);
-
-  useEffect(() => {
-    if (!imageFile || !previewUrl?.startsWith('blob:')) return;
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [imageFile, previewUrl]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -85,7 +75,7 @@ export function FoodItemForm({
       description: description.trim() || null,
       price: trimmedPrice,
       sku: sku.trim(),
-      image_url: imageUrl.trim() || null,
+      ...(removeImage && !imageFile ? { image_url: '' } : {}),
       is_active: isActive,
       variant_mode: 'simple',
       menu_category_id: categoryId || null,
@@ -102,7 +92,7 @@ export function FoodItemForm({
     };
 
     if (isEdit) {
-      const { variants: _v, stock_quantity: _s, variant_mode: _m, ...updatePayload } = payload;
+      const updatePayload = { name: payload.name, description: payload.description, price: payload.price, sku: payload.sku, is_active: payload.is_active, menu_category_id: payload.menu_category_id, clear_menu_category: payload.clear_menu_category, ...(removeImage && !imageFile ? { image_url: '' } : {}) };
       onSubmit?.(updatePayload, imageFile);
       return;
     }
@@ -112,7 +102,7 @@ export function FoodItemForm({
 
   return (
     <form onSubmit={handleSubmit} className={embedded ? 'space-y-5' : 'dashboard-card space-y-5'}>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_140px]">
+      <div>
         <div className="space-y-4">
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-forest-muted">Basics</p>
@@ -197,34 +187,9 @@ export function FoodItemForm({
           </div>
         </div>
 
-        <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-forest-muted">Photo</p>
-          <div className="overflow-hidden rounded-xl border border-cream-dark bg-cream/40">
-            {previewUrl ? (
-              <img src={previewUrl} alt="" className="aspect-square w-full object-cover" />
-            ) : (
-              <div className="flex aspect-square items-center justify-center bg-gradient-to-br from-forest/80 to-forest-muted text-cream/60">
-                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.25}>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-            )}
-          </div>
-          <FileUploadField
-            id="food-item-image"
-            label="Upload image"
-            optional
-            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-            hint="JPEG, PNG or WebP · max 5 MB"
-            value={imageFile}
-            onChange={setImageFile}
-          />
-        </div>
       </div>
+
+      <CataloguePhotoField file={imageFile} existingUrl={initial?.image_url} removed={removeImage} disabled={submitting} onChange={setImageFile} onRemove={() => setRemoveImage(true)} />
 
       <div className="border-t border-cream-dark pt-3">
         <button

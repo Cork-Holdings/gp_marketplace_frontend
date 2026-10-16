@@ -43,6 +43,6 @@ export function sanitizeText(text: unknown) {
 }
 
 export function getStoreTheme(store: any) {
-  const primary = store?.brand_color ?? store?.primary_color ?? '#383d92';
+  const primary = store?.brand_color ?? store?.primary_color ?? '#257DC1';
   return { primary };
 }

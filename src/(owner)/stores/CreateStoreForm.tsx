@@ -7,6 +7,10 @@ import { CURRENCY_OPTIONS } from '@/components/onboarding/onboardingConfig';
 import { FileUploadField, FormField, SelectField } from '@/components/onboarding/OnboardingFields';
 import { StepIndicator, OnboardingNav } from '@/components/onboarding/OnboardingLayout';
 import { ErrorState } from '@/components/common/ErrorState';
+import { StoreLinkField } from '@/components/onboarding/StoreLinkField';
+import { requireAvailableStoreLink } from '@/lib/api/storeLink';
+import { storeLinkIssue, ussdCodeIssue } from '@/lib/storeIdentity';
+import { UserFacingError } from '@/lib/userMessage';
 import { Button } from '@/components/ui/button';
 import { useMarketplace } from '@/lib/context/useMarketplace';
 import { useAsync } from '@/hooks/useAsync';
@@ -27,7 +31,7 @@ const STEPS = [
   { id: 'identity', label: 'Store identity' },
   { id: 'type', label: 'Business type' },
   { id: 'setup', label: 'Payments & brand' },
-  { id: 'review', label: 'Review & launch' },
+  { id: 'review', label: 'Review & create' },
 ];
 
 const INITIAL_FORM = {
@@ -259,6 +263,9 @@ export function CreateStoreForm({
   const [stepIndex, setStepIndex] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const [checkingLink, setCheckingLink] = useState(false);
+  const [slugEdited, setSlugEdited] = useState(false);
+  const [slugSuffix] = useState(() => crypto.randomUUID().slice(0, 6));
 
   const eligibleMemberships = memberships.filter((m) => canCreateStore(m.role));
   const adminMerchants: MerchantOption[] = useMemo(() => {
@@ -273,9 +280,10 @@ export function CreateStoreForm({
 
   const merchantOptions: MerchantOption[] = adminMode
     ? adminMerchants
-    : eligibleMemberships.map((m) => ({
+    : eligibleMemberships.map((m, index) => ({
         id: m.merchant_id,
-        label: m.trading_name ?? m.legal_name ?? m.merchant_id,
+        label: m.trading_name?.trim() || m.legal_name?.trim() ||
+          (eligibleMemberships.length === 1 ? 'Your registered business' : `Registered business ${index + 1}`),
       }));
 
   const currentStep = STEPS[stepIndex]?.id ?? STEPS[0].id;
@@ -307,12 +315,13 @@ export function CreateStoreForm({
   }, [adminMode, adminMerchants, memberships, eligibleMemberships, form.merchant_id]);
 
   const setField = (key: keyof typeof INITIAL_FORM) => (value: string) => {
+    if (key === 'slug') setSlugEdited(true);
     setForm((f) => {
       const next = { ...f, [key]: value };
       if (key === 'name') {
         const base = slugify(value);
-        if (!f.slug || f.slug === slugify(f.name)) {
-          next.slug = base ? `${base}-${Date.now().toString(36).slice(-4)}` : '';
+        if (!slugEdited) {
+          next.slug = base ? `${base.slice(0, 93).replace(/-+$/, '')}-${slugSuffix}` : '';
         }
         if (!f.branch_name) next.branch_name = value;
       }
@@ -338,8 +347,19 @@ export function CreateStoreForm({
     }
   }, [currentStep, form]);
 
-  const goNext = () => {
+  const goNext = async () => {
     if (!canAdvance) return;
+    if (submitting || checkingLink) return;
+    if (currentStep === 'identity') {
+      setCheckingLink(true);
+      try { await requireAvailableStoreLink(form.slug, adminMode); }
+      catch (err) { setError(err); return; }
+      finally { setCheckingLink(false); }
+    }
+    if (currentStep === 'setup') {
+      const issue = ussdCodeIssue(form.ussd_code);
+      if (issue) { setError(new UserFacingError(issue)); return; }
+    }
     setStepIndex((i) => Math.min(i + 1, STEPS.length - 1));
     setError(null);
   };
@@ -350,9 +370,13 @@ export function CreateStoreForm({
   };
 
   const handleSubmit = async () => {
+    if (submitting || checkingLink) return;
     setSubmitting(true);
     setError(null);
     try {
+      const issue = storeLinkIssue(form.slug) || ussdCodeIssue(form.ussd_code);
+      if (issue) throw new UserFacingError(issue);
+      await requireAvailableStoreLink(form.slug, adminMode);
       const payload = {
         merchant_id: form.merchant_id,
         name: form.name.trim(),
@@ -381,6 +405,7 @@ export function CreateStoreForm({
       setForm(INITIAL_FORM);
       setImageFile(null);
       setStepIndex(0);
+      setSlugEdited(false);
       onSuccess?.(store);
     } catch (err) {
       setError(err);
@@ -424,7 +449,7 @@ export function CreateStoreForm({
         className="space-y-4"
       >
         <FormField label="Store name" id="name" required value={form.name} onChange={setField('name')} />
-        <FormField label="URL slug" id="slug" required value={form.slug} onChange={setField('slug')} />
+        <StoreLinkField value={form.slug} onChange={setField('slug')} admin={adminMode} />
         <SelectField
           label="Business type"
           id="store_type"
@@ -484,21 +509,14 @@ export function CreateStoreForm({
                 value={form.branch_name}
                 onChange={setField('branch_name')}
                 placeholder="Kabulonga"
-                hint="Optional — helps you tell branches apart."
+                hint="A name for this location, such as Kabulonga or Main branch. You can keep the suggested name; it does not change your storefront link."
               />
-              <FormField
-                label="URL slug"
-                id="slug"
-                required
-                value={form.slug}
-                onChange={setField('slug')}
-                hint="Lowercase, unique across Geepay."
-              />
+              <StoreLinkField value={form.slug} onChange={setField('slug')} admin={adminMode} />
             </div>
 
             <div className="rounded-xl border border-forest/10 bg-sage/20 px-4 py-3">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-forest-muted">Your storefront link</p>
-              <p className="mt-1 font-mono text-sm text-forest">
+              <p className="mt-1 break-all font-mono text-sm text-forest">
                 geepay.com/store/<span className="font-semibold">{form.slug.trim() || 'your-store'}</span>
               </p>
             </div>
@@ -535,8 +553,8 @@ export function CreateStoreForm({
                 required
                 value={form.ussd_code}
                 onChange={setField('ussd_code')}
-                placeholder="115"
-                hint="Short code for *USSD# checkout"
+                placeholder="*111*1*1#"
+                hint="Enter your assigned dial code, including * and #, or a short code such as 115."
               />
               <SelectField
                 label="Currency"
@@ -580,17 +598,17 @@ export function CreateStoreForm({
         return (
           <div className="space-y-5">
             <div>
-              <h2 className="font-serif text-xl text-charcoal">Ready to launch?</h2>
+              <h2 className="font-serif text-xl text-charcoal">Ready to create your store?</h2>
               <p className="mt-1 text-sm text-forest-muted">
                 Double-check the details below. You can customize branding and copy after creation.
               </p>
             </div>
 
             <div className="rounded-2xl border border-cream-dark bg-cream/30 px-4 py-1">
-              <ReviewRow label="Business" value={selectedBusiness ?? form.merchant_id} />
+              <ReviewRow label="Business" value={selectedBusiness ?? 'Your registered business'} />
               <ReviewRow label="Store name" value={form.name} />
               <ReviewRow label="Branch" value={form.branch_name || form.name} />
-              <ReviewRow label="Slug" value={form.slug} />
+              <ReviewRow label="Storefront link ending" value={form.slug} />
               <ReviewRow
                 label="Type"
                 value={storeTypes.find((t) => t.value === form.store_type)?.label}
@@ -609,12 +627,12 @@ export function CreateStoreForm({
             <p className="rounded-xl border border-sky/20 bg-info-light/50 px-4 py-3 text-xs leading-relaxed text-info-fg">
               {adminMode ? (
                 <>
-                  After launch, the merchant can open <strong>Branding</strong> to upload hero slides, set brand
+                  After creation, the merchant can open <strong>Branding</strong> to upload hero slides, set brand
                   color, and edit page copy.
                 </>
               ) : (
                 <>
-                  After launch, head to <strong>Branding</strong> to upload hero slides, set your brand color, and
+                  After creation, head to <strong>Branding</strong> to upload hero slides, set your brand color, and
                   edit page copy.
                 </>
               )}
@@ -653,9 +671,9 @@ export function CreateStoreForm({
           <OnboardingNav
             onBack={stepIndex > 0 ? goBack : undefined}
             onNext={isLastStep ? handleSubmit : goNext}
-            nextLabel={isLastStep ? (submitting ? 'Launching…' : 'Launch store') : 'Continue'}
-            submitting={submitting}
-            nextDisabled={!canAdvance}
+            nextLabel={isLastStep ? (submitting ? 'Creating…' : 'Create store') : 'Continue'}
+            submitting={submitting || checkingLink}
+            nextDisabled={!canAdvance || checkingLink}
           />
         </div>
 
@@ -679,7 +697,7 @@ export function CreateStoreForm({
             <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-sage text-forest">
               <IconCheck className="h-2.5 w-2.5" />
             </span>
-            Store goes live immediately after launch
+            Public trading requires approved verification and an active business
           </li>
           <li className="flex gap-2">
             <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-sage text-forest">

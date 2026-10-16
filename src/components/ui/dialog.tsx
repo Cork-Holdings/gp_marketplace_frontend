@@ -21,10 +21,10 @@ export const DialogOverlay = React.forwardRef<
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const sizeClasses = {
-  sm: 'max-w-md',
-  md: 'max-w-lg',
-  lg: 'max-w-2xl',
-  xl: 'max-w-4xl',
+  sm: 'max-w-md [--dialog-max-width:28rem]',
+  md: 'max-w-lg [--dialog-max-width:32rem]',
+  lg: 'max-w-2xl [--dialog-max-width:42rem]',
+  xl: 'max-w-4xl [--dialog-max-width:56rem]',
 } as const;
 
 export interface DialogContentProps
@@ -35,27 +35,39 @@ export interface DialogContentProps
 export const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   DialogContentProps
->(({ className, size = 'md', children, ...props }, ref) => (
-  <DialogPortal>
+>(({ className, size = 'md', children, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
+  const openerRef = React.useRef<HTMLElement | null>(null);
+  return <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-cream-dark bg-white shadow-xl focus:outline-none',
+        'geepay-dialog fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] flex-col overflow-hidden -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-cream-dark bg-white shadow-xl focus:outline-none',
         sizeClasses[size],
         className,
       )}
       {...props}
+      onOpenAutoFocus={event => {
+        openerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        onOpenAutoFocus?.(event);
+      }}
+      onCloseAutoFocus={event => {
+        onCloseAutoFocus?.(event);
+        if (!event.defaultPrevented && openerRef.current?.isConnected) {
+          event.preventDefault();
+          openerRef.current.focus({ preventScroll: true });
+        }
+      }}
     >
       {children}
     </DialogPrimitive.Content>
-  </DialogPortal>
-));
+  </DialogPortal>;
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 export const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn('flex items-center justify-between border-b border-cream-dark px-5 py-4', className)}
+    className={cn('flex shrink-0 items-center justify-between gap-3 border-b border-cream-dark px-5 py-4', className)}
     {...props}
   />
 );
@@ -63,14 +75,14 @@ DialogHeader.displayName = 'DialogHeader';
 
 export const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
-    className={cn('flex justify-end gap-2 border-t border-cream-dark px-5 py-4', className)}
+    className={cn('geepay-dialog-footer flex shrink-0 flex-wrap justify-end gap-3 border-t border-cream-dark px-5 py-4', className)}
     {...props}
   />
 );
 DialogFooter.displayName = 'DialogFooter';
 
 export const DialogBody = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('max-h-[70vh] overflow-y-auto px-5 py-4', className)} {...props} />
+  <div className={cn('min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4', className)} {...props} />
 );
 DialogBody.displayName = 'DialogBody';
 

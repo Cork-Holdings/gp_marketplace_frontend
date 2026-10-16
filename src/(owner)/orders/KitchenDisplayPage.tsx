@@ -1,5 +1,5 @@
 import { Navigate } from 'react-router-dom';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useAuth } from '@/lib/context/useAuth';
 import { useMarketplace } from '@/lib/context/useMarketplace';
 import { useMarketplaceCapabilities } from '@/hooks/useMarketplaceCapabilities';
@@ -12,9 +12,8 @@ import { FoodOrderKanban } from './FoodOrderKanban';
 import { ErrorState } from '@/components/common/ErrorState';
 import { TableSkeleton } from '@/components/common/Skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
-import { Button } from '@/components/ui/button';
-
-type KitchenFilter = 'all' | 'dine_in' | 'delivery' | 'pickup';
+import { OrderWorkspace } from './OrderWorkspace';
+import { WorkflowPageHeader } from '@/components/common/WorkflowVisuals';
 
 const KITCHEN_ACTIVE_STATUSES = new Set([
   'pending_payment',
@@ -27,9 +26,8 @@ const KITCHEN_ACTIVE_STATUSES = new Set([
 function KitchenBoard({ store }) {
   const { selectedStoreId } = useMarketplace();
   const capabilities = useMarketplaceCapabilities(store);
-  const { orders, loading, error, refreshOrders } = useRealtimeOrders();
-  const [filter, setFilter] = useState<KitchenFilter>('all');
-  const [showCompleted, setShowCompleted] = useState(false);
+  const { orders, filters, loading, error, refreshOrders } = useRealtimeOrders();
+  const filter = filters.fulfillment || 'all';
 
   const handleStatusChange = useCallback(
     async (orderId, payload) => {
@@ -42,28 +40,19 @@ function KitchenBoard({ store }) {
 
   const kitchenOrders = useMemo(() => {
     return orders.filter((o) => {
-      if (!showCompleted && o.status === 'completed') return false;
-      if (o.status === 'cancelled') return false;
-      if (!showCompleted && !KITCHEN_ACTIVE_STATUSES.has(o.status) && o.status !== 'completed') {
-        return false;
-      }
-      if (filter === 'all') return true;
-      if (filter === 'dine_in') return o.fulfillment_type === 'dine_in';
-      if (filter === 'delivery') return o.fulfillment_type === 'delivery';
-      if (filter === 'pickup') return o.fulfillment_type === 'pickup' || o.fulfillment_type === 'collection';
-      return true;
+      return KITCHEN_ACTIVE_STATUSES.has(o.status);
     });
-  }, [orders, filter, showCompleted]);
+  }, [orders]);
 
   const lanes = useMemo(() => {
-    if (filter === 'dine_in') return DINE_IN_KANBAN_LANES;
+    if (filter === 'dine_in') return DINE_IN_KANBAN_LANES.filter(lane => lane.key !== 'served');
     if (filter === 'delivery' || filter === 'pickup') return FOOD_KANBAN_LANES;
     // Mixed board: merge dine-in "ready to serve" label with dispatch lane.
     return [
       { key: 'incoming', label: 'Incoming / New', statuses: ['pending_payment', 'paid'] },
       { key: 'preparing', label: 'In Preparation', statuses: ['preparing'] },
       { key: 'ready', label: 'Ready', statuses: ['ready_for_dispatch'] },
-      { key: 'out', label: 'Served / Out', statuses: ['completed', 'dispatched'] },
+      { key: 'out', label: 'Out for delivery / pickup', statuses: ['dispatched'] },
     ];
   }, [filter]);
 
@@ -72,38 +61,6 @@ function KitchenBoard({ store }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {(
-            [
-              ['all', 'All tickets'],
-              ['dine_in', 'Dine-in'],
-              ['delivery', 'Delivery'],
-              ['pickup', 'Pickup'],
-            ] as const
-          ).map(([key, label]) => (
-            <Button
-              key={key}
-              type="button"
-              size="sm"
-              variant={filter === key ? 'primary' : 'secondary'}
-              onClick={() => setFilter(key)}
-            >
-              {label}
-            </Button>
-          ))}
-        </div>
-        <label className="flex items-center gap-2 text-xs text-forest-muted">
-          <input
-            type="checkbox"
-            checked={showCompleted}
-            onChange={(e) => setShowCompleted(e.target.checked)}
-            className="rounded text-forest focus:ring-forest"
-          />
-          Show completed
-        </label>
-      </div>
-
       {kitchenOrders.length === 0 ? (
         <EmptyState
           title="Kitchen is clear"
@@ -154,15 +111,10 @@ export default function KitchenDisplayPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight text-charcoal">Kitchen</h1>
-        <p className="mt-1 text-sm text-forest-muted">
-          Live tickets with items, modifiers, and notes — advance each order as you cook and plate.
-        </p>
-      </header>
+      <WorkflowPageHeader kind="order" eyebrow="Daily work" title="Kitchen" description="Prepare and serve live tickets. Completed orders remain available in History." />
 
-      <RealtimeOrderProvider storeId={selectedStoreId} enabled>
-        <KitchenBoard store={selectedStore} />
+      <RealtimeOrderProvider key={selectedStoreId} storeId={selectedStoreId} enabled>
+        <OrderWorkspace><KitchenBoard store={selectedStore} /></OrderWorkspace>
       </RealtimeOrderProvider>
     </div>
   );

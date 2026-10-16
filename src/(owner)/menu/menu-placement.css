@@ -1,0 +1,18 @@
+.menu-drop-section { padding: 20px; border: 1px solid #e3e8f1; border-radius: 10px; background: #f8fafc; }
+.menu-drop-section h2 { font-weight: 600; font-size: 16px; }
+.menu-drop-section > p { font-size: 13px; color: #64748b; margin: 6px 0 14px; }
+.menu-drop-targets { display: flex; flex-wrap: wrap; gap: 10px; }
+.menu-drop-target { flex: 1 1 160px; padding: 16px; background: #fff; border: 1px dashed #bac5d7; border-radius: 8px; min-height: 76px; }
+.menu-drop-target strong, .menu-drop-target span { display: block; }
+.menu-drop-target strong { font-size: 14px; }
+.menu-drop-target span { font-size: 12px; color: #64748b; margin-top: 4px; }
+.menu-drop-target.is-over { background: #edf1ff; border: 2px solid #257DC1; padding: 15px; }
+.menu-drop-target.is-busy { opacity: .6; }
+.menu-drag-handle { display: flex; align-items: center; justify-content: center; flex-shrink: 0; min-height: 44px; width: 24px; color: #6b7890; cursor: grab; }
+.menu-drag-handle:active { cursor: grabbing; }
+.menu-drag-handle:focus-visible, .menu-suggestion:focus-visible { outline: 2px solid #257DC1; outline-offset: 3px; }
+.menu-suggestion { display: block; color: #257DC1; font-size: 12px; min-height: 36px; text-align: left; }
+.menu-section-suggestions { display: flex; flex-wrap: wrap; gap: 12px; }
+.menu-section-suggestions button { min-height: 44px; font-size: 12px; color: #257DC1; text-decoration: underline; text-underline-offset: 3px; }
+.menu-placement-error { color: #b91c1c !important; }
+@media (max-width: 480px) { .menu-placement-row { flex-wrap: wrap; gap: 8px; } .menu-placement-row select { margin-left: auto; max-width: 100%; min-height: 44px; } .menu-drop-section { padding: 16px; } }

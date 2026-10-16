@@ -4,6 +4,7 @@ import {
   CATEGORY_LABELS,
   WORKFLOW_TRANSITIONS,
   FOOD_KANBAN_LANES,
+  PHYSICAL_GOODS_KANBAN_LANES,
   SERVICE_KANBAN_LANES,
   resolveStoreCategory,
   isFoodStore,
@@ -31,7 +32,7 @@ export function useMarketplaceCapabilities(store) {
         ? FOOD_KANBAN_LANES
         : isServiceStore(store)
           ? SERVICE_KANBAN_LANES
-          : null,
+          : PHYSICAL_GOODS_KANBAN_LANES,
       supportsScheduling:
         category === STORE_CATEGORIES.ON_PREMISE_SERVICE ||
         category === STORE_CATEGORIES.ON_SITE_SERVICE,

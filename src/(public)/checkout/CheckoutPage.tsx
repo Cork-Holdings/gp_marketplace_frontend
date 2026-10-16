@@ -1,12 +1,16 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useCart } from '@/lib/context/useCart';
+import { useAuth } from '@/lib/context/useAuth';
 import { storefrontApi } from '@/lib/api/services';
 import { useAsync } from '@/hooks/useAsync';
 import { useMarketplaceCapabilities } from '@/hooks/useMarketplaceCapabilities';
+import { usePaymentMode } from '@/hooks/usePaymentMode';
 import { formatCurrency, getStoreTheme } from '@/lib/utils';
 import { estimateDeliveryFee } from '@/lib/deliveryFee';
-import { DEFAULT_CURRENCY, DEFAULT_PHONE_PLACEHOLDER } from '@/lib/locale';
+import { DEFAULT_COUNTRY_CODE, DEFAULT_CURRENCY, DEFAULT_PHONE_PLACEHOLDER } from '@/lib/locale';
+import { PhoneInput } from '@/components/shared/PhoneInput';
+import { internationalPhone, localPhone, validPhone, PHONE_ERROR } from '@/lib/phone';
 import { storeHomePath, storeOrderTrackingPath } from '@/lib/storeRouting';
 import { ensureGuestSessionId, qrSessionForStore } from '@/lib/qrSession';
 import { CheckoutSummary } from '@/components/storefront/CheckoutSummary';
@@ -53,6 +57,8 @@ export default function CheckoutPage() {
   const { store_slug: storeSlugParam } = useParams();
   const navigate = useNavigate();
   const { items, totals, store, storeId, checkoutPayload, clearCart } = useCart();
+  const { user } = useAuth();
+  const simulated = usePaymentMode();
   const homePath = storeHomePath(storeSlugParam);
 
   const [phone, setPhone] = useState('');
@@ -62,9 +68,13 @@ export default function CheckoutPage() {
   const [tableTouched, setTableTouched] = useState(false);
   const [booking, setBooking] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const submitLock = useRef(false);
   const [submitError, setSubmitError] = useState(null);
   const [checkoutResult, setCheckoutResult] = useState(null);
   const [phoneTouched, setPhoneTouched] = useState(false);
+  const [addressTouched, setAddressTouched] = useState(false);
+  const [addressLine, setAddressLine] = useState('');
+  const [addressCity, setAddressCity] = useState('');
 
   const { data: storeData, loading: storeLoading } = useAsync(async () => {
     if (!storeSlugParam) throw new Error('Store not found');
@@ -105,10 +115,15 @@ export default function CheckoutPage() {
     }
   }, [qrSession?.tableId]);
 
+  useEffect(() => {
+    if (!phoneTouched && !phone && typeof user?.phone === 'string') setPhone(localPhone(user.phone));
+  }, [phoneTouched, phone, user?.phone]);
+
   const isDelivery = fulfillmentType === 'delivery';
-  const phoneDigits = phone.replace(/\D/g, '');
-  const phoneValid = phoneDigits.length >= 9;
+  const phoneValid = simulated || validPhone(phone);
   const tableValid = !isDineIn || Boolean(linkedTableId);
+  const needsDeliveryAddress = isDelivery && !booking?.delivery_address;
+  const addressValid = !needsDeliveryAddress || (addressLine.trim().length > 0 && addressCity.trim().length > 0);
 
   const checkoutTotals = useMemo(() => {
     const delivery = estimateDeliveryFee(activeStore, {
@@ -122,19 +137,24 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!activeStoreId || items.length === 0) return;
+    if (!activeStoreId || items.length === 0 || submitLock.current) return;
     setPhoneTouched(true);
+    setAddressTouched(true);
     if (isDineIn) setTableTouched(true);
-    if (!phoneValid || !tableValid) return;
+    if (!phoneValid || !tableValid || !addressValid) return;
+    submitLock.current = true;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const payload: any = checkoutPayload(phone, notes, {
+      const payload: any = checkoutPayload(simulated ? '0970000000' : internationalPhone(phone), notes, {
         fulfillment_type: fulfillmentType,
         payment_method: 'mobile_money',
         scheduled_date: booking?.scheduled_date,
         scheduled_time: booking?.scheduled_time,
-        delivery_address: isDineIn || !isDelivery ? undefined : booking?.delivery_address,
+        delivery_address: isDineIn || !isDelivery ? undefined : booking?.delivery_address ?? {
+          line1: addressLine.trim(), city: addressCity.trim(), country: activeStore?.country_code ?? DEFAULT_COUNTRY_CODE,
+          ...(user?.full_name ? { contact_name: user.full_name } : {}), phone: phone ? internationalPhone(phone) : '',
+        },
         delivery_latitude: isDineIn || !isDelivery ? undefined : booking?.delivery_latitude,
         delivery_longitude: isDineIn || !isDelivery ? undefined : booking?.delivery_longitude,
         table_id: isDineIn ? linkedTableId : undefined,
@@ -145,12 +165,15 @@ export default function CheckoutPage() {
       payload.total = checkoutTotals.total;
       payload.currency = currency;
 
-      const result = await storefrontApi.checkout(activeStoreId, payload);
+      // Guest checkout stays available; a signed-in customer's verified session
+      // links the order to account history without trusting a client customer ID.
+      const result = await storefrontApi.checkout(activeStoreId, payload, Boolean(user));
       setCheckoutResult(result);
       clearCart();
     } catch (err) {
       setSubmitError(err);
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   };
@@ -259,7 +282,7 @@ export default function CheckoutPage() {
           <div>
             <h1 className="font-serif text-2xl text-forest sm:text-3xl">Checkout</h1>
             <p className="mt-1 text-sm text-forest-muted">
-              Choose how you&apos;d like your order, then pay with mobile money.
+              {simulated ? 'Choose pickup or delivery, then rehearse the payment. No money moves.' : 'Choose how you’d like your order, then pay with mobile money.'}
             </p>
           </div>
 
@@ -284,6 +307,7 @@ export default function CheckoutPage() {
                         key={opt.value}
                         type="button"
                         role="radio"
+                        aria-label={opt.label}
                         aria-checked={selected}
                         onClick={() => setFulfillmentType(opt.value)}
                         className={`rounded-xl border px-3 py-3 text-left transition ${
@@ -371,21 +395,37 @@ export default function CheckoutPage() {
               </section>
             )}
 
+            {needsDeliveryAddress && (
+              <section className="rounded-2xl border border-cream-dark bg-white p-5 shadow-sm">
+                <h2 className="text-sm font-semibold text-charcoal">Delivery address</h2>
+                <p className="mt-1 text-xs text-forest-muted">Tell the business where to bring your order. Your contact name and payment phone are included automatically.</p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="delivery-line" className="mb-1.5 block text-sm font-medium text-charcoal">Street address</label>
+                    <input id="delivery-line" type="text" autoComplete="street-address" required value={addressLine} onChange={event => setAddressLine(event.target.value)} onBlur={() => setAddressTouched(true)} aria-invalid={addressTouched && !addressLine.trim()} className="w-full rounded-xl border border-cream-dark bg-white px-3 py-2.5 text-sm text-charcoal focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/20" placeholder="Street and building number" />
+                  </div>
+                  <div>
+                    <label htmlFor="delivery-city" className="mb-1.5 block text-sm font-medium text-charcoal">City or town</label>
+                    <input id="delivery-city" type="text" autoComplete="address-level2" required value={addressCity} onChange={event => setAddressCity(event.target.value)} onBlur={() => setAddressTouched(true)} aria-invalid={addressTouched && !addressCity.trim()} className="w-full rounded-xl border border-cream-dark bg-white px-3 py-2.5 text-sm text-charcoal focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/20" placeholder="e.g. Lusaka" />
+                  </div>
+                </div>
+                {addressTouched && !addressValid && <p className="mt-2 text-xs text-red-700" role="alert">Enter a street address and city for delivery.</p>}
+              </section>
+            )}
+
             <section className="rounded-2xl border border-cream-dark bg-white p-5 shadow-sm">
               <h2 className="text-sm font-semibold text-charcoal">Payment</h2>
               <p className="mt-0.5 text-xs text-forest-muted">
-                We&apos;ll send a mobile money prompt to this number
+                {simulated ? 'Local simulation: no phone prompt, charge or merchant payout.' : 'We\u2019ll send a mobile money prompt to this number'}
               </p>
 
-              <div className="mt-4">
+              {!simulated && <div className="mt-4">
                 <label htmlFor="phone" className="mb-1.5 block text-sm font-medium text-charcoal">
                   Mobile money phone
                 </label>
-                <input
+                <PhoneInput
                   id="phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
+                  name="phone"
                   required
                   placeholder={DEFAULT_PHONE_PLACEHOLDER}
                   value={phone}
@@ -399,12 +439,11 @@ export default function CheckoutPage() {
                   }`}
                 />
                 {phoneTouched && !phoneValid ? (
-                  <p className="mt-1.5 text-xs text-red-600">Enter a valid phone number (at least 9 digits).</p>
+                  <p className="mt-1.5 text-xs text-red-600">{PHONE_ERROR}</p>
                 ) : (
                   <p className="mt-1.5 text-xs text-forest-muted">MTN, Airtel, or Zamtel</p>
                 )}
-              </div>
-
+              </div>}
               <div className="mt-4">
                 <label htmlFor="notes" className="mb-1.5 block text-sm font-medium text-charcoal">
                   Order notes <span className="font-normal text-forest-muted">(optional)</span>
@@ -435,6 +474,8 @@ export default function CheckoutPage() {
             >
               {submitting
                 ? 'Placing order…'
+                : simulated
+                  ? `Simulate order · ${formatCurrency(checkoutTotals.total, currency)}`
                 : isDineIn
                   ? `Pay ${formatCurrency(checkoutTotals.total, currency)}`
                   : `Place order · ${formatCurrency(checkoutTotals.total, currency)}`}
@@ -458,7 +499,7 @@ export default function CheckoutPage() {
               compact
             />
             <p className="mt-4 text-xs leading-relaxed text-forest-muted">
-              {isDineIn
+              {simulated ? 'Test payment only. No money moves and no phone approval is needed.' : isDineIn
                 ? 'After you approve payment on your phone, the kitchen gets your ticket.'
                 : 'You confirm payment on your phone after placing the order.'}
             </p>
@@ -480,7 +521,7 @@ export default function CheckoutPage() {
             disabled={submitting}
             className="shrink-0 rounded-full bg-forest px-6 py-3.5 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-60"
           >
-            {submitting ? 'Placing…' : isDineIn ? 'Pay now' : 'Place order'}
+            {submitting ? 'Placing…' : simulated ? 'Simulate order' : isDineIn ? 'Pay now' : 'Place order'}
           </button>
         </div>
       </div>

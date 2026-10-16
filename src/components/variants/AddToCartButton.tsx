@@ -63,6 +63,8 @@ export function AddToCartButton({
   const [selection, setSelection] = useState(null);
   const [modifierGroups, setModifierGroups] = useState([]);
   const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsError, setGroupsError] = useState('');
+  const [groupsReload, setGroupsReload] = useState(0);
   const [modifierSelection, setModifierSelection] = useState({
     selection: {},
     modifiers: [],
@@ -90,10 +92,14 @@ export function AddToCartButton({
     if (!open || !showModifiers || !storeId || !product?.id) return;
     let cancelled = false;
     setGroupsLoading(true);
+    setGroupsError('');
     storefrontApi
-      .listModifierGroups(storeId, product.id, product.name)
+      .listModifierGroups(storeId, product.id)
       .then((groups) => {
         if (!cancelled) setModifierGroups(filterSelectableGroups(groups));
+      })
+      .catch(() => {
+        if (!cancelled) setGroupsError('Options could not be loaded. Retry before adding this item so required choices are not missed.');
       })
       .finally(() => {
         if (!cancelled) setGroupsLoading(false);
@@ -101,7 +107,7 @@ export function AddToCartButton({
     return () => {
       cancelled = true;
     };
-  }, [open, showModifiers, storeId, product?.id, product?.name]);
+  }, [open, showModifiers, storeId, product?.id, groupsReload]);
 
   const addPlain = () => {
     const fallback = defaultVariantSelection(product);
@@ -113,12 +119,13 @@ export function AddToCartButton({
     });
   };
 
-  const openModal = (preloadedGroups) => {
+  const openModal = (preloadedGroups = undefined) => {
     if (preloadedGroups) setModifierGroups(filterSelectableGroups(preloadedGroups));
     setOpen(true);
   };
 
   const handleDirectAdd = async () => {
+    if (checking || disabled) return;
     if (needsVariantPicker) {
       openModal();
       return;
@@ -130,21 +137,22 @@ export function AddToCartButton({
 
     setChecking(true);
     try {
-      const groups = await storefrontApi.listModifierGroups(storeId, product.id, product.name);
+      const groups = await storefrontApi.listModifierGroups(storeId, product.id);
       if (hasSelectableModifiers(groups)) {
         openModal(groups);
       } else {
         addPlain();
       }
     } catch {
-      // If options fail to load, still allow a plain add rather than blocking the diner.
-      addPlain();
+      // Required options must not be silently bypassed when their request fails.
+      openModal();
     } finally {
       setChecking(false);
     }
   };
 
   const handleConfirm = () => {
+    if (confirmDisabled) return;
     const fallback = selection ?? defaultVariantSelection(product);
     onAdd(product, 1, {
       variant: fallback?.variant,
@@ -163,11 +171,12 @@ export function AddToCartButton({
   const confirmDisabled =
     (hasVariants && !selection?.variantId && !selection?.variant) ||
     groupsLoading ||
+    Boolean(groupsError) ||
     (modifierGroups.length > 0 && !modifierSelection.valid);
 
   const busy = checking || disabled;
 
-  const label = checking ? '…' : 'Add';
+  const label = checking ? 'Checking options…' : 'Add';
 
   return (
     <>
@@ -176,7 +185,8 @@ export function AddToCartButton({
         disabled={busy}
         onClick={handleDirectAdd}
         className={className}
-        aria-label={children ? `Add ${product?.name ?? 'item'} to cart` : undefined}
+        aria-label={checking ? 'Checking item options' : `Add ${product?.name ?? 'item'} to cart`}
+        aria-busy={checking}
       >
         {children ?? label}
       </button>
@@ -199,6 +209,7 @@ export function AddToCartButton({
             <ProductVariantSelector product={product} onChange={handleSelectionChange} />
           )}
           {showModifiers && groupsLoading && <p className="text-xs text-forest-muted">Loading options…</p>}
+          {showModifiers && groupsError && <div role="alert" className="space-y-2 text-sm text-danger-fg"><p>{groupsError}</p><Button variant="secondary" onClick={() => setGroupsReload(value => value + 1)}>Retry options</Button></div>}
           {showModifiers && modifierGroups.length > 0 && (
             <ModifierGroupSelector groups={modifierGroups} onChange={setModifierSelection} />
           )}

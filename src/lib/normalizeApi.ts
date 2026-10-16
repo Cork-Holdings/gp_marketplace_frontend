@@ -50,7 +50,7 @@ export function normalizeMembershipList(response: any): Membership[] {
   return pickArray<Membership>(response, ['memberships', 'merchant_memberships', 'items', 'data']).map(
     (m) => ({
       ...m,
-      role: m.role ?? m.member_role,
+      role: m.role ?? (typeof m.member_role === 'string' ? m.member_role : undefined),
     }),
   );
 }

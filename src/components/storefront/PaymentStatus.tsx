@@ -4,8 +4,12 @@ import { QrCodeDisplay } from './QrCodeDisplay';
 import { useOrderPolling } from '../../hooks/useOrderPolling';
 import { formatCurrency } from '@/lib/utils';
 import { DEFAULT_CURRENCY, DEFAULT_PHONE_PLACEHOLDER } from '@/lib/locale';
+import { PhoneInput } from '@/components/shared/PhoneInput';
+import { internationalPhone, localPhone, validPhone, PHONE_ERROR } from '@/lib/phone';
 import { storeOrderTrackingPath } from '@/lib/storeRouting';
 import { storefrontApi } from '@/lib/api/services';
+import { usePaymentMode } from '@/hooks/usePaymentMode';
+import { userMessage } from '@/lib/userMessage';
 
 const FAILED_COLLECTION = new Set(['failed', 'failure', 'rejected', 'cancelled', 'canceled']);
 
@@ -70,21 +74,21 @@ export function PaymentStatus({
   storeId,
   storeSlugParam,
   currency = DEFAULT_CURRENCY,
-  brandColor = '#383d92',
+  brandColor = '#257DC1',
   onPaymentConfirmed,
   collectionEnabled = false,
   collectionStatus: initialCollectionStatus = '',
-  collectionMessage: initialCollectionMessage = '',
+  collectionMessage: _providerMessage = '',
   collectionProvider = '',
   dineInMode = false,
 }) {
+  const simulated = usePaymentMode();
   const [copied, setCopied] = useState(false);
-  const [retryPhone, setRetryPhone] = useState(order?.customer_phone ?? '');
+  const [retryPhone, setRetryPhone] = useState(localPhone(order?.customer_phone));
   const [retrying, setRetrying] = useState(false);
   const [retryError, setRetryError] = useState(null);
   const [localCollection, setLocalCollection] = useState({
     status: initialCollectionStatus,
-    message: initialCollectionMessage,
     provider: collectionProvider,
   });
   const orderId = order?.id;
@@ -98,7 +102,6 @@ export function PaymentStatus({
 
   const activeCollection = {
     status: collection?.status || localCollection.status,
-    message: collection?.message || localCollection.message,
     provider: collection?.provider || localCollection.provider,
     enabled: collection?.enabled ?? collectionEnabled,
   };
@@ -119,16 +122,16 @@ export function PaymentStatus({
 
   const handleRetryCollect = async () => {
     if (!storeId || !orderId) return;
+    if (!simulated && !validPhone(retryPhone)) { setRetryError(new Error(PHONE_ERROR)); return; }
     setRetrying(true);
     setRetryError(null);
     try {
       const data = await storefrontApi.collectPayment(storeId, orderId, {
-        phone_number: retryPhone,
+        phone_number: simulated ? '0970000000' : internationalPhone(retryPhone),
         retry: true,
       });
       setLocalCollection({
         status: data.collection_status ?? 'pending',
-        message: data.collection_message ?? 'Collection request sent',
         provider: data.collection_provider ?? '',
       });
       confirmPaid();
@@ -151,7 +154,8 @@ export function PaymentStatus({
     return (
       <div className={`${shellClass} p-6 text-center`}>
         <SuccessIcon />
-        <h3 className="font-serif text-2xl text-forest">Payment confirmed</h3>
+        <h3 className="font-serif text-2xl text-forest">{simulated ? 'Simulated payment confirmed' : 'Payment confirmed'}</h3>
+        {simulated && <p className="mt-2 text-sm text-forest-muted">Local test only. No money has moved.</p>}
         <p className="mt-2 text-sm text-forest-muted">
           Order #{order?.order_number ?? order?.id?.slice(0, 8)} is paid
           {dineInMode ? ' — the kitchen has your ticket.' : '.'}
@@ -194,9 +198,6 @@ export function PaymentStatus({
   }
 
   if (showCollectUI) {
-    const providerLabel = activeCollection.provider
-      ? activeCollection.provider.charAt(0).toUpperCase() + activeCollection.provider.slice(1)
-      : 'Mobile money';
 
     return (
       <div className={shellClass}>
@@ -210,13 +211,12 @@ export function PaymentStatus({
             </div>
           )}
           <h3 className="font-serif text-xl text-forest">
-            {collectionFailed ? 'Payment not completed' : 'Approve on your phone'}
+            {collectionFailed ? 'Payment not completed' : simulated ? 'Checking simulated payment' : 'Approve on your phone'}
           </h3>
           <p className="mt-1 text-sm text-forest-muted">
-            {collectionFailed
-              ? 'The prompt expired or was declined. Try again below.'
-              : activeCollection.message ||
-                `A ${providerLabel} prompt was sent. Open it and enter your PIN.`}
+            {simulated ? 'Local test only. No charge or phone prompt. Check the result before retrying.' : collectionFailed
+              ? 'Payment was not completed. Check your payment history before trying again. If you were charged, contact the business instead of paying again.'
+              : 'Check your phone for the mobile-money prompt and approve it if the amount is correct. This page will check the result. Do not pay again while it is pending.'}
           </p>
         </div>
 
@@ -234,11 +234,11 @@ export function PaymentStatus({
             <div className="rounded-2xl border border-amber-200/80 bg-amber-50/60 p-4">
               <p className="text-xs font-semibold text-amber-950">What to do</p>
               <ol className="mt-2 space-y-2">
-                {[
+                {(simulated ? ['No phone approval is needed', 'Payment status is stored by the test provider', 'This page updates automatically'] : [
                   'Check your phone for the payment notification',
                   'Enter your mobile money PIN to approve',
                   'This page updates automatically when paid',
-                ].map((step, i) => (
+                ]).map((step, i) => (
                   <li key={step} className="flex items-start gap-2.5 text-xs text-amber-900">
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-200/80 text-[10px] font-bold">
                       {i + 1}
@@ -273,25 +273,24 @@ export function PaymentStatus({
               <label className="block text-xs font-medium text-red-900" htmlFor="retry-phone">
                 Phone number
               </label>
-              <input
+              {!simulated && <PhoneInput
                 id="retry-phone"
-                type="tel"
-                inputMode="tel"
+                name="phone"
                 value={retryPhone}
                 onChange={(e) => setRetryPhone(e.target.value)}
                 className="w-full rounded-xl border border-red-200 bg-white px-3 py-2.5 text-sm tabular-nums text-charcoal"
                 placeholder={DEFAULT_PHONE_PLACEHOLDER}
-              />
+              />}
               <button
                 type="button"
                 onClick={handleRetryCollect}
-                disabled={retrying || !retryPhone.trim()}
+                disabled={retrying || (!simulated && !validPhone(retryPhone))}
                 className="w-full rounded-full bg-forest py-3 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-60"
               >
-                {retrying ? 'Sending…' : 'Send new payment prompt'}
+                {retrying ? 'Sending…' : simulated ? 'Retry simulated payment' : 'Send new payment prompt'}
               </button>
               {retryError && (
-                <p className="text-xs text-red-700">Could not restart collection. Please try again.</p>
+                  <p role="alert" className="text-xs text-red-700">{userMessage(retryError, 'Could not confirm the payment result. Check its status before trying again. If you were charged, do not pay again; contact the business.')}</p>
               )}
             </div>
           )}

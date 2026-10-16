@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useCart } from '@/lib/context/useCart';
 import { storefrontApi } from '@/lib/api/services';
@@ -9,8 +9,8 @@ import { useMarketplaceCapabilities } from '@/hooks/useMarketplaceCapabilities';
 import { getStoreTheme, formatCurrency } from '@/lib/utils';
 import { DEFAULT_CURRENCY } from '@/lib/locale';
 import { getStorefrontSettings } from '@/lib/normalizeApi';
-import { StoreNavbar } from '@/components/storefront/landing/StoreNavbar';
-import { HeroSection } from '@/components/storefront/landing/HeroSection';
+import { ReferenceStoreHeader as StoreNavbar, ReferenceStoreHero as HeroSection } from '@/components/reference/ReferenceStoreLanding';
+import { MobileMarketplaceNav } from '@/components/reference/MobileMarketplaceNav';
 import { BestsellingSection } from '@/components/storefront/landing/BestsellingSection';
 import { BrandBanner } from '@/components/storefront/landing/BrandBanner';
 import { FeaturePills } from '@/components/storefront/landing/FeaturePills';
@@ -21,6 +21,8 @@ import { StoreFooter } from '@/components/storefront/landing/StoreFooter';
 import { CartSlideOver } from '@/components/storefront/CartSlideOver';
 import { Skeleton } from '@/components/common/Skeleton';
 import { ErrorState } from '@/components/common/ErrorState';
+import { normalizeProductList } from '@/lib/normalizeApi';
+import { purchaseFlowFor } from '@/lib/purchaseFlow';
 
 export default function StorefrontPage() {
   const { store_slug: storeSlugParam } = useParams();
@@ -28,6 +30,10 @@ export default function StorefrontPage() {
   const tableParam = searchParams.get('table');
   const { initStore, addItem, store, clearCart, items, totals, toggleCart } = useCart();
   const [searchQuery, setSearchQuery] = useState('');
+  const requestedItem = searchParams.get('item') ?? '';
+  const requestedCart = searchParams.get('cart') === '1';
+  const openedCart = useRef('');
+  useEffect(() => { setSearchQuery(requestedItem); }, [requestedItem, storeSlugParam]);
 
   const {
     data: storeData,
@@ -69,6 +75,13 @@ export default function StorefrontPage() {
   }, [storeData, initStore]);
 
   useEffect(() => {
+    if (requestedCart && store?.id === storeData?.id && store?.id && items.length && openedCart.current !== store.id) {
+      openedCart.current = store.id;
+      toggleCart(true);
+    }
+  }, [requestedCart, store, storeData, items.length, toggleCart]);
+
+  useEffect(() => {
     if (!searchQuery || !isDineInSession) return;
     document.getElementById('shop')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [searchQuery, isDineInSession]);
@@ -77,6 +90,13 @@ export default function StorefrontPage() {
   const currency = storeData?.currency ?? DEFAULT_CURRENCY;
   const capabilities = useMarketplaceCapabilities(storeData);
   const copy = getStorefrontSettings(storeData);
+  const listedProducts = normalizeProductList(products);
+  const hasCheckoutItems = listedProducts.some(product => purchaseFlowFor(product, storeData) === 'checkout');
+  const isServiceCatalog = capabilities.category === 'ON_PREMISE_SERVICE' || capabilities.category === 'ON_SITE_SERVICE';
+  const catalogEyebrow = isServiceCatalog && (!copy.catalog_eyebrow?.trim() || copy.catalog_eyebrow.trim().toLowerCase() === 'full collection')
+    ? 'What we offer' : copy.catalog_eyebrow?.trim() || (capabilities.isFood ? 'Our Menu' : 'Full Collection');
+  const catalogTitle = isServiceCatalog && (!copy.catalog_title?.trim() || copy.catalog_title.trim().toLowerCase() === 'shop all products')
+    ? 'Explore Services' : copy.catalog_title?.trim() || (capabilities.isFood ? 'Explore the Menu' : 'Shop All Products');
 
   if (!storeSlugParam) {
     return (
@@ -117,16 +137,14 @@ export default function StorefrontPage() {
   }
 
   const menuSection = (
-    <section id="shop" className={`mx-auto max-w-7xl px-4 lg:px-8 ${isDineInSession ? 'py-6 pb-28' : 'py-16'}`}>
+    <section id="shop" className={`mx-auto max-w-7xl scroll-mt-24 px-4 lg:px-8 ${isDineInSession ? 'py-6 pb-28' : 'py-16'}`}>
       {!isDineInSession && (
         <div className="mb-10 text-center">
           <p className="text-xs font-medium uppercase tracking-widest text-forest-muted">
-            {copy.catalog_eyebrow?.trim() ||
-              (capabilities.isFood ? 'Our Menu' : 'Full Collection')}
+            {catalogEyebrow}
           </p>
           <h2 className="mt-2 font-serif text-3xl text-charcoal sm:text-4xl">
-            {copy.catalog_title?.trim() ||
-              (capabilities.isFood ? 'Explore the Menu' : 'Shop All Products')}
+            {catalogTitle}
           </h2>
         </div>
       )}
@@ -140,6 +158,7 @@ export default function StorefrontPage() {
             error={productsError}
             onRetry={retryProducts}
             searchQuery={searchQuery}
+            store={storeData}
           />
         ) : (
           <MenuCategoryBrowser
@@ -150,6 +169,7 @@ export default function StorefrontPage() {
             searchQuery={searchQuery}
             highlightCategoryId={qrSession?.menuCategoryId}
             stickyCategories={isDineInSession}
+            store={storeData}
           />
         )
       ) : (
@@ -161,18 +181,21 @@ export default function StorefrontPage() {
           error={productsError}
           onRetry={retryProducts}
           searchQuery={searchQuery}
+          store={storeData}
         />
       )}
     </section>
   );
 
   return (
-    <div id="top" className="min-h-screen bg-cream">
+    <div id="top" className="reference-store min-h-screen bg-white">
       <StoreNavbar
         store={storeData}
         onSearch={setSearchQuery}
         dineInMode={isDineInSession}
         isFood={capabilities.isFood}
+        isService={isServiceCatalog}
+        showCart={hasCheckoutItems}
       />
 
       {(isDineInSession || (capabilities.supportsTables && tableLabel)) && (
@@ -194,6 +217,7 @@ export default function StorefrontPage() {
       ) : (
         <>
           <HeroSection store={storeData} />
+          {capabilities.category === 'ON_PREMISE_SERVICE' && <section className="mx-auto -mt-2 max-w-7xl px-4 pb-6 lg:px-8" aria-label="Book a service"><div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-forest/15 bg-white px-5 py-5 shadow-sm sm:px-7"><div><p className="text-xs font-semibold uppercase tracking-wider text-forest-muted">Appointments</p><h2 className="mt-1 font-serif text-xl text-charcoal">Find a time for your visit</h2><p className="mt-1 text-sm text-forest-muted">Choose a service, see its price, and request a time in three steps.</p></div><Link to={`/account/bookings?store=${encodeURIComponent(storeData.id)}`} className="inline-flex min-h-11 items-center rounded-xl bg-forest px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-forest-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky motion-reduce:transition-none">Book a service →</Link></div></section>}
           <FeaturePills capabilities={capabilities} />
           <BestsellingSection
             products={products}
@@ -207,7 +231,7 @@ export default function StorefrontPage() {
           />
           <BrandBanner store={storeData} />
           {menuSection}
-          <BestSellersPreview products={products} currency={currency} onAdd={addItem} />
+          <BestSellersPreview products={products} currency={currency} onAdd={addItem} store={storeData} />
           <p className="pb-4 text-center text-sm text-forest-muted">
             <Link to={marketplaceHomePath()} className="font-semibold text-forest hover:underline">
               Browse all stores on Geepay →
@@ -230,13 +254,14 @@ export default function StorefrontPage() {
         </div>
       )}
 
-      <CartSlideOver
+      {!isDineInSession && <MobileMarketplaceNav/>}
+      {hasCheckoutItems && <CartSlideOver
         storeSlugParam={storeSlugParam}
         brandColor={brandColor}
         currency={currency}
         tableParam={tableLabel}
         dineInMode={isDineInSession}
-      />
+      />}
     </div>
   );
 }

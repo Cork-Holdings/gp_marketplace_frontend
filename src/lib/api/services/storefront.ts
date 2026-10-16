@@ -13,8 +13,11 @@ import {
 import type { MenuCategory } from '@/types/menuCategory';
 import type { ModifierGroup } from '@/types/modifier';
 import type { Table } from '@/types/table';
+import type { DiscoveryPage } from '@/lib/discovery';
 
 export const StorefrontService = {
+  discoverOfferings: (filters: { search?: string; kind?: string; category?: string; branch?: string; sort?: string; limit?: number; offset?: number }, signal?: AbortSignal): Promise<DiscoveryPage> =>
+    secureApi.get(withQuery(getRoute('MARKETPLACE_OFFERINGS'), filters), { auth: false, signal }),
   listStoreTypes: () => secureApi.get(getRoute('LIST_STORE_TYPES'), { auth: false }),
 
   listStores: async () => {
@@ -26,6 +29,10 @@ export const StorefrontService = {
     const data = await secureApi.get(getRoute('GET_STORE', { storeId }), { auth: false });
     return normalizeStore(data) ?? data;
   },
+  searchServiceProviders: (search = '', limit = 8, offset = 0) =>
+    secureApi.get(withQuery(getRoute('LIST_SERVICE_PROVIDERS'), { search, limit, offset }), { auth: false }),
+  listResources: (storeId: string) => secureApi.get(getRoute('STORE_RESOURCES', { storeId }), { auth: false }),
+  listBookableServices: (storeId: string) => secureApi.get(getRoute('STORE_BOOKABLE_SERVICES', { storeId }), { auth: false }),
 
   getStoreBySlug: async (slug: string) => {
     const list = await StorefrontService.listStores();

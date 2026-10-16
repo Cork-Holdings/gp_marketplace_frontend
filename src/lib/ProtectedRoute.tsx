@@ -18,7 +18,7 @@ export function ProtectedRoute({ children, roles = [], permission, anyPermission
   const { permissions, loading: permLoading } = usePermissions();
   const location = useLocation();
 
-  if (loading || (anyPermission?.length && permLoading)) {
+  if (loading || ((permission || anyPermission?.length) && permLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center p-8">
         <Skeleton className="h-8 w-48" />

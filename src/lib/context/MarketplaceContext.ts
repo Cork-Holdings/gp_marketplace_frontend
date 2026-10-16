@@ -8,6 +8,7 @@ export interface MarketplaceContextValue {
   selectedMembership: any;
   memberRole: string | null;
   loading: boolean;
+  initialized: boolean;
   error: unknown;
   selectStore: (storeId: string | null) => void;
   refreshStores: () => Promise<any[]>;

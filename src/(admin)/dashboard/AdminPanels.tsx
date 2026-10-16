@@ -1,3 +1,4 @@
+import { RecordListTable } from '@/components/common/RecordListTable';
 import { useState } from 'react';
 import { adminApi } from '@/lib/api/services';
 import { normalizeStoreList } from '@/lib/normalizeApi';
@@ -7,6 +8,8 @@ import { TableSkeleton } from '@/components/common/Skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { PasswordField } from '@/components/shared/PasswordField';
 import { DEFAULT_PHONE_PLACEHOLDER } from '@/lib/locale';
+import { PhoneInput } from '@/components/shared/PhoneInput';
+import { internationalPhone } from '@/lib/phone';
 
 export function OnboardOwnerForm({ onSuccess }) {
   const [form, setForm] = useState({
@@ -27,7 +30,7 @@ export function OnboardOwnerForm({ onSuccess }) {
     setSubmitting(true);
     setError(null);
     try {
-      const owner = await adminApi.onboardOwner(form);
+      const owner = await adminApi.onboardOwner({ ...form, phone: form.phone ? internationalPhone(form.phone) : '' });
       setForm({ email: '', password: '', full_name: '', phone: '' });
       onSuccess?.(owner);
     } catch (err) {
@@ -45,16 +48,16 @@ export function OnboardOwnerForm({ onSuccess }) {
           <label htmlFor={field} className="mb-1 block text-xs font-medium capitalize text-gray-600">
             {field.replace('_', ' ')}
           </label>
-          <input
+          {field === 'phone' ? <PhoneInput id={field} name={field} placeholder={DEFAULT_PHONE_PLACEHOLDER} value={form[field]} onChange={handleChange} className="w-full rounded-lg border px-3 py-2 text-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest" /> : <input
             id={field}
             name={field}
-            type={field === 'email' ? 'email' : 'tel'}
+            type={field === 'email' ? 'email' : 'text'}
             required={field !== 'phone'}
             placeholder={field === 'phone' ? DEFAULT_PHONE_PLACEHOLDER : undefined}
             value={form[field]}
             onChange={handleChange}
             className="w-full rounded-lg border px-3 py-2 text-sm focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
-          />
+          />}
         </div>
       ))}
       <PasswordField
@@ -87,7 +90,7 @@ export function OwnerList() {
 
   return (
     <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
-      <table className="w-full text-left text-sm">
+      <RecordListTable className="w-full text-left text-sm">
         <thead className="border-b bg-gray-50 text-xs uppercase text-gray-500">
           <tr>
             <th className="px-4 py-3">Name</th>
@@ -124,7 +127,7 @@ export function OwnerList() {
             ))
           )}
         </tbody>
-      </table>
+      </RecordListTable>
     </div>
   );
 }
@@ -149,7 +152,7 @@ export function StoreListAdmin() {
   return (
     <div className="dashboard-card overflow-hidden p-0">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <RecordListTable className="w-full min-w-[640px] text-left text-sm">
           <thead>
             <tr className="border-b border-cream-dark bg-cream/60 text-[11px] font-medium uppercase tracking-wide text-forest-muted">
               <th className="px-4 py-3">Name</th>
@@ -184,7 +187,7 @@ export function StoreListAdmin() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </RecordListTable>
       </div>
     </div>
   );

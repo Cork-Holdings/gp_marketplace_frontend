@@ -1,3 +1,4 @@
+import { userMessage } from '@/lib/userMessage';
 import { useMemo, useState, useCallback, type ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/context/useAuth';
@@ -277,7 +278,7 @@ function CounterTill({ store }: { store: any }) {
       setTableId('');
       setFulfillmentType('self_pickup');
     } catch (err: any) {
-      setSubmitError(err?.message ?? 'Could not place order. Try again.');
+      setSubmitError(userMessage(err, 'Could not place order. Try again.'));
     } finally {
       setSubmitting(false);
     }

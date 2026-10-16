@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { ToastNotice } from '@/components/common/ActionFeedback';
 import { useAuth } from '@/lib/context/useAuth';
 import { useMarketplace } from '@/lib/context/useMarketplace';
 import { ownerApi } from '@/lib/api/services';
@@ -85,7 +86,7 @@ function settingsFromStore(store: Store | null): CopyForm {
   const s = getStorefrontSettings(store) as StorefrontSettings;
   return {
     description: store?.description ?? '',
-    brand_color: store?.brand_color ?? '#383D92',
+    brand_color: store?.brand_color ?? '#257DC1',
     hero_headline: s.hero_headline ?? '',
     hero_tagline: s.hero_tagline ?? '',
     cta_label: s.cta_label ?? '',
@@ -229,7 +230,7 @@ function StorefrontPreview({
   form: CopyForm;
   heroImages: string[];
 }) {
-  const brandColor = /^#[0-9A-Fa-f]{6}$/.test(form.brand_color) ? form.brand_color : '#383D92';
+  const brandColor = /^#[0-9A-Fa-f]{6}$/.test(form.brand_color) ? form.brand_color : '#257DC1';
   const headline = form.hero_headline.trim() || store?.name || 'Your store';
   const tagline = form.hero_tagline.trim() || form.description.trim() || 'Your tagline appears here';
   const cta = form.cta_label.trim() || 'Shop now';
@@ -302,7 +303,7 @@ function BrandColorPicker({
   onChange: (v: string) => void;
 }) {
   const colorRef = useRef<HTMLInputElement>(null);
-  const presets = ['#383D92', '#080C30', '#00AFEB', '#10B981', '#EF4444'];
+  const presets = ['#257DC1', '#10182B', '#30C5F4', '#10B981', '#EF4444'];
 
   return (
     <div className="flex flex-wrap items-center gap-4">
@@ -328,7 +329,7 @@ function BrandColorPicker({
           type="text"
           value={value}
           onChange={onChange}
-          placeholder="#383D92"
+          placeholder="#257DC1"
         />
       </div>
       <div className="flex gap-2">
@@ -375,6 +376,7 @@ function CopySection({
 }
 
 export default function StoreSettingsPage() {
+  const navigate = useNavigate();
   const { isStoreOwner } = useAuth();
   const { selectedStore, selectedStoreId, refreshStores, loading: storesLoading } = useMarketplace();
 
@@ -470,9 +472,9 @@ export default function StoreSettingsPage() {
     }
   };
 
-  const handleSaveCopy = async (e?: FormEvent) => {
+  const handleSaveCopy = async (e?: FormEvent, continueSetup = false) => {
     e?.preventDefault();
-    if (!selectedStoreId) return;
+    if (!selectedStoreId || saving || uploadKind) return;
     setSaving(true);
     setError(null);
     setSuccess(null);
@@ -494,8 +496,12 @@ export default function StoreSettingsPage() {
         },
       });
       await applyStoreResponse(store);
-      setSuccess('Branding saved — changes are live on your storefront.');
+      setSuccess('Branding saved.');
       setDirty(false);
+      if (continueSetup) {
+        if (tab === 'visuals') { setTab('copy'); window.scrollTo({ top: 0 }); }
+        else navigate('/portal/owner/products');
+      }
     } catch (err) {
       setError(err);
     } finally {
@@ -503,8 +509,8 @@ export default function StoreSettingsPage() {
     }
   };
 
-  const storefrontHref = selectedStore?.slug ? `/store/${selectedStore.slug}` : null;
-  const brandSwatch = /^#[0-9A-Fa-f]{6}$/.test(form.brand_color) ? form.brand_color : '#383D92';
+  const storefrontHref = selectedStore?.public_trading_ready === true && selectedStore?.slug ? `/store/${selectedStore.slug}` : null;
+  const brandSwatch = /^#[0-9A-Fa-f]{6}$/.test(form.brand_color) ? form.brand_color : '#257DC1';
 
   return (
     <div className="w-full space-y-6 pb-24 lg:pb-8">
@@ -536,14 +542,8 @@ export default function StoreSettingsPage() {
 
       {/* Alerts */}
       {error ? <ErrorState error={error as Error} title="Could not save changes" /> : null}
-      {success ? (
-        <p
-          className="rounded-xl border border-sage bg-sage/40 px-4 py-3 text-sm text-forest"
-          role="status"
-        >
-          {success}
-        </p>
-      ) : null}
+      <ToastNotice message={success} />
+      {selectedStore?.merchant_verified === false && <p className="rounded-xl border border-forest/15 bg-cream px-4 py-3 text-sm text-forest">Your business verification is awaiting GeePay administrator approval. You can finish setup now; your store and services will appear publicly after approval.</p>}
 
       {/* Tab bar */}
       <div
@@ -835,10 +835,10 @@ export default function StoreSettingsPage() {
             )}
             <Button
               type="button"
-              disabled={saving || !selectedStoreId || (tab === 'visuals' && !dirty)}
-              onClick={() => handleSaveCopy()}
+              disabled={saving || Boolean(uploadKind) || !selectedStoreId}
+              onClick={() => handleSaveCopy(undefined, true)}
             >
-              {saving ? 'Saving…' : dirty ? 'Save changes' : 'Save copy & theme'}
+              {saving ? 'Saving…' : 'Save and continue'}
             </Button>
           </div>
         </div>

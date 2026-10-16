@@ -1,5 +1,7 @@
+import { RecordListTable } from '@/components/common/RecordListTable';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/context/useAuth';
+import { usePaymentMode } from '@/hooks/usePaymentMode';
 import { useMarketplace } from '@/lib/context/useMarketplace';
 import { useFetchWrapper } from '@/hooks/useFetchWrapper';
 import { ownerApi } from '@/lib/api/services';
@@ -17,6 +19,7 @@ import {
 } from '@/types/transaction';
 
 export default function MerchantTransactionsPage() {
+  const simulated = usePaymentMode();
   const { isStoreOwner } = useAuth();
   const { selectedStoreId } = useMarketplace();
 
@@ -46,6 +49,7 @@ export default function MerchantTransactionsPage() {
           <StoreCategoryBadge />
         </div>
       </header>
+      {simulated && <Link to="/portal/owner/settlements" className="flex items-center justify-between gap-3 rounded-xl border border-cream-dark bg-sage/20 p-4 text-sm font-semibold text-forest">View settlement rehearsal for this branch<span aria-hidden="true">→</span></Link>}
 
       {!selectedStoreId ? (
         <EmptyState
@@ -57,8 +61,9 @@ export default function MerchantTransactionsPage() {
       ) : error ? (
         <ErrorState error={error} onRetry={retry} />
       ) : (
-        <div className="dashboard-card overflow-hidden p-0">
-          <table className="w-full text-left text-sm">
+        <div className="dashboard-card responsive-table-shell overflow-hidden p-0">
+          <RecordListTable className="responsive-data-table w-full text-left text-sm">
+            <caption className="sr-only">Payments, refunds and adjustments for this store</caption>
             <thead className="border-b border-cream-dark bg-cream/50 text-xs uppercase text-forest-muted">
               <tr>
                 <th className="px-4 py-3">Transaction</th>
@@ -79,7 +84,7 @@ export default function MerchantTransactionsPage() {
               ) : (
                 transactions.map((txn) => (
                   <tr key={txn.id} className="hover:bg-cream/40">
-                    <td className="px-4 py-3">
+                    <td data-label="Transaction" className="px-4 py-3">
                       <Link
                         to={`/portal/owner/transactions/${txn.id}`}
                         className="font-mono text-xs text-forest hover:underline"
@@ -93,19 +98,19 @@ export default function MerchantTransactionsPage() {
                         </p>
                       )}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-forest-muted">
+                    <td data-label="Order" className="px-4 py-3 font-mono text-xs text-forest-muted">
                       {txn.order_id ? `#${txn.order_id.slice(0, 8)}` : '—'}
                     </td>
-                    <td className="px-4 py-3 capitalize">
+                    <td data-label="Type" className="px-4 py-3 capitalize">
                       {TRANSACTION_TYPE_LABELS[txn.transaction_type] ?? txn.transaction_type}
                     </td>
-                    <td className="px-4 py-3 font-medium tabular-nums">
+                    <td data-label="Amount" className="px-4 py-3 font-medium tabular-nums">
                       {formatCurrency(txn.amount, txn.currency)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td data-label="Status" className="px-4 py-3">
                       <StatusBadge status={txn.status} />
                     </td>
-                    <td className="px-4 py-3 text-xs text-forest-muted">
+                    <td data-label="Date" className="px-4 py-3 text-xs text-forest-muted">
                       {txn.created_at
                         ? new Date(txn.created_at).toLocaleDateString(DEFAULT_LOCALE)
                         : '—'}
@@ -114,7 +119,7 @@ export default function MerchantTransactionsPage() {
                 ))
               )}
             </tbody>
-          </table>
+          </RecordListTable>
         </div>
       )}
     </div>

@@ -9,6 +9,11 @@ export interface RealtimeOrderContextValue {
   refreshOrders: () => Promise<void>;
   acknowledgeAlerts: () => void;
   hasActiveAlerts: boolean;
+  total: number;
+  page: number;
+  setPage: (page: number) => void;
+  filters: { view: 'active' | 'history'; q: string; fulfillment: string; status: string };
+  setFilters: (filters: Partial<RealtimeOrderContextValue['filters']>) => void;
 }
 
 export const RealtimeOrderContext = createContext<RealtimeOrderContextValue | null>(null);

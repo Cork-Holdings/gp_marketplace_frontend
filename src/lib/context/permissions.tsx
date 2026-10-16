@@ -1,6 +1,7 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { rolesApi } from '@/lib/api/services';
 import { useMarketplace } from './useMarketplace';
+import { useAuth } from './useAuth';
 
 export interface PermissionsContextValue {
   permissions: Set<string>;
@@ -12,38 +13,48 @@ export interface PermissionsContextValue {
 export const PermissionsContext = createContext<PermissionsContextValue | null>(null);
 
 export function PermissionsProvider({ children }: { children: ReactNode }) {
-  const { selectedStore } = useMarketplace();
+  const { selectedStore, initialized, loading: storesLoading } = useMarketplace();
+  const { user, isMerchant } = useAuth();
   const [permissions, setPermissions] = useState<Set<string>>(new Set());
-  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [resolvedKey, setResolvedKey] = useState('');
+  const version = useRef(0);
 
   const merchantId = selectedStore?.merchant_id as string | undefined;
+  const key = `${user?.id ?? ''}:${merchantId ?? ''}`;
+  const loading = fetching || (isMerchant && (!initialized || storesLoading || resolvedKey !== key));
+  const currentPermissions = useMemo(() => resolvedKey === key ? permissions : new Set<string>(), [key, resolvedKey, permissions]);
 
   const refresh = useCallback(async () => {
+    const request = ++version.current;
     if (!merchantId) {
       setPermissions(new Set());
+      setResolvedKey(key);
+      setFetching(false);
       return;
     }
-    setLoading(true);
+    setFetching(true);
     try {
       const data: any = await rolesApi.myPermissions(merchantId);
       const list: string[] = Array.isArray(data?.permissions) ? data.permissions : [];
-      setPermissions(new Set(list));
+      if (request === version.current) setPermissions(new Set(list));
     } catch {
-      setPermissions(new Set());
+      if (request === version.current) setPermissions(new Set());
     } finally {
-      setLoading(false);
+      if (request === version.current) { setFetching(false); setResolvedKey(key); }
     }
-  }, [merchantId]);
+  }, [merchantId, key]);
 
   useEffect(() => {
-    refresh();
+    void refresh();
+    return () => { version.current++; };
   }, [refresh]);
 
-  const hasPermission = useCallback((name: string) => permissions.has(name), [permissions]);
+  const hasPermission = useCallback((name: string) => currentPermissions.has(name), [currentPermissions]);
 
   const value = useMemo(
-    () => ({ permissions, loading, hasPermission, refresh }),
-    [permissions, loading, hasPermission, refresh],
+    () => ({ permissions: currentPermissions, loading, hasPermission, refresh }),
+    [currentPermissions, loading, hasPermission, refresh],
   );
 
   return <PermissionsContext.Provider value={value}>{children}</PermissionsContext.Provider>;

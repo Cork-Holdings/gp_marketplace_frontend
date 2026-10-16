@@ -16,9 +16,9 @@ import {
 
 function DetailRow({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-cream-dark py-3 last:border-0">
-      <dt className="text-sm text-forest-muted">{label}</dt>
-      <dd className="text-right text-sm font-medium text-charcoal">{children}</dd>
+    <div className="flex items-start justify-between gap-4 border-b border-[#edf0f6] py-4 last:border-0">
+      <dt className="text-sm text-[#59657c]">{label}</dt>
+      <dd className="max-w-[70%] break-words text-right text-sm font-medium text-[#101834]">{children}</dd>
     </div>
   );
 }
@@ -40,11 +40,9 @@ export default function TransactionDetailPage() {
   const txn = data as Transaction | null;
 
   return (
-    <div className="mx-auto max-w-lg space-y-4 p-4 md:p-8">
-      <Link to="/account/transactions" className="text-sm text-forest-muted hover:text-forest">
-        ← Back to transactions
-      </Link>
-      <h1 className="text-2xl font-bold text-charcoal">Transaction Details</h1>
+    <main className="workflow-page">
+      <Link to="/account/transactions" className="workflow-back-link">← All payments</Link>
+      <header className="workflow-header"><p className="workflow-eyebrow">Your account / Payments</p><h1>Payment details</h1><p>Check the amount, method and status of this payment activity.</p></header>
 
       {loading ? (
         <TableSkeleton rows={6} cols={2} />
@@ -53,8 +51,8 @@ export default function TransactionDetailPage() {
       ) : !txn ? (
         <p className="text-sm text-forest-muted">Transaction not found.</p>
       ) : (
-        <div className="dashboard-card space-y-1 p-5">
-          <dl>
+        <section className="workflow-panel max-w-3xl">
+          <dl className="px-6">
             <DetailRow label="Status">
               <StatusBadge status={txn.status} />
             </DetailRow>
@@ -77,13 +75,13 @@ export default function TransactionDetailPage() {
                 {txn.external_reference ?? '—'}
               </span>
             </DetailRow>
-            <DetailRow label="Order">
+            <DetailRow label="Related order">
               {txn.order_id ? (
                 <Link
                   to={`/account/orders/${txn.order_id}`}
-                  className="font-mono text-xs text-forest hover:underline"
+                  className="font-semibold text-[#257DC1] hover:underline"
                 >
-                  #{txn.order_id.slice(0, 8)}
+                  View order
                 </Link>
               ) : (
                 '—'
@@ -94,12 +92,9 @@ export default function TransactionDetailPage() {
                 ? new Date(txn.created_at).toLocaleString(DEFAULT_LOCALE)
                 : '—'}
             </DetailRow>
-            <DetailRow label="Transaction ID">
-              <span className="break-all font-mono text-xs">{txn.id}</span>
-            </DetailRow>
           </dl>
-        </div>
+        </section>
       )}
-    </div>
+    </main>
   );
 }

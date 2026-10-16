@@ -53,6 +53,14 @@ export const WORKFLOW_TRANSITIONS = {
   ],
 };
 
+export const PHYSICAL_GOODS_KANBAN_LANES = [
+  { key: 'incoming', label: 'Incoming', statuses: ['pending_payment', 'paid'] },
+  { key: 'packaged', label: 'Packed & ready', statuses: ['packaged'] },
+  { key: 'delivery', label: 'Out / arrived', statuses: ['dispatched', 'arrived'] },
+  { key: 'done', label: 'Completed', statuses: ['completed', 'fulfilled'] },
+  { key: 'cancelled', label: 'Cancelled', statuses: ['cancelled'] },
+];
+
 export const FOOD_KANBAN_LANES = [
   { key: 'incoming', label: 'Incoming / New', statuses: ['pending_payment', 'paid'] },
   { key: 'preparing', label: 'In Preparation', statuses: ['preparing'] },

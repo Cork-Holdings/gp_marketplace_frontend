@@ -6,6 +6,6 @@ export default function PortalHomePage() {
 
   if (isAdmin) return <Navigate to="/portal/admin" replace />;
   if (isStoreOwner) return <Navigate to="/portal/owner" replace />;
-  if (isCustomer) return <Navigate to="/account/ledger" replace />;
+  if (isCustomer) return <Navigate to="/account" replace />;
   return <Navigate to="/login" replace />;
 }

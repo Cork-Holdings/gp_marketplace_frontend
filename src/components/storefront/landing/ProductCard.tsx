@@ -1,6 +1,11 @@
 import { formatCurrency } from '@/lib/utils';
+import { CatalogueImage } from '@/components/marketplace/CatalogueImage';
+import { categoryForItem } from '@/lib/discovery';
 import { AddToCartButton } from '../../variants/AddToCartButton';
 import type { Product } from '@/types/product';
+import type { Store } from '@/types/store';
+import { Link } from 'react-router-dom';
+import { purchaseActionLabel, purchaseActionPath, purchaseFlowFor } from '@/lib/purchaseFlow';
 
 function getVariantPriceRange(product: Product): { min: number; max: number } | null {
   const variants = product.variants ?? [];
@@ -20,13 +25,18 @@ export function ProductCard({
   product,
   currency,
   onAdd,
+  store,
 }: {
   product: Product;
   currency: string;
   onAdd: (...args: unknown[]) => void;
+  store?: Store;
   index?: number;
 }) {
-  const outOfStock = product.stock_quantity !== undefined && product.stock_quantity <= 0;
+  const flow = purchaseFlowFor(product, store);
+  const actionLabel = purchaseActionLabel(flow);
+  const actionPath = store ? purchaseActionPath(flow, product, store) : null;
+  const outOfStock = flow === 'checkout' && product.stock_quantity !== undefined && product.stock_quantity <= 0;
   const lowStock = !outOfStock && product.stock_quantity !== undefined && product.stock_quantity <= 5;
   const hasVariants = (product.variants?.length ?? 0) > 0 || !!product.variant_mode;
   const priceRange = hasVariants ? getVariantPriceRange(product) : null;
@@ -36,57 +46,25 @@ export function ProductCard({
   const categoryLabel: string | null =
     product.category_name ?? product.menu_category_name ?? product.category ?? null;
 
-  return (
-    <AddToCartButton
-      product={product}
-      onAdd={onAdd}
-      currency={currency}
-      disabled={outOfStock}
-      className={[
+  const className = [
         'group flex w-full flex-col overflow-hidden rounded-2xl bg-white text-left',
         'shadow-[0_1px_4px_rgba(0,0,0,0.06),0_6px_18px_-2px_rgba(0,0,0,0.08)]',
-        'transition-all duration-300 ease-out',
-        'hover:-translate-y-1 hover:shadow-[0_4px_22px_rgba(56,61,146,0.2),0_1px_4px_rgba(0,0,0,0.06)]',
+        'transition-[transform,box-shadow] duration-300 ease-out motion-reduce:transition-none',
+        'hover:-translate-y-1 hover:shadow-[0_4px_22px_rgba(37, 125, 193,0.2),0_1px_4px_rgba(0,0,0,0.06)]',
         'active:scale-[0.98] active:duration-100',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt/40 focus-visible:ring-offset-2',
         'disabled:cursor-not-allowed disabled:opacity-60',
         'disabled:hover:translate-y-0 disabled:hover:shadow-[0_1px_4px_rgba(0,0,0,0.06),0_6px_18px_-2px_rgba(0,0,0,0.08)]',
         'disabled:active:scale-100',
-      ].join(' ')}
-    >
+      ].join(' ');
+  const content = <>
       {/* ── Image ──────────────────────────────────────────────────────── */}
       <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-cobalt-50/60 to-sky-50/60">
-        {product.image_url ? (
-          <img
-            src={product.image_url}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            className={[
-              'h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.07]',
-              outOfStock ? 'saturate-50 brightness-90' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center" aria-hidden="true">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-10 w-10 text-cobalt/15 sm:h-12 sm:w-12"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z"
-              />
-            </svg>
-          </div>
-        )}
+        <CatalogueImage imageUrl={product.image_url} alt={product.name} category={categoryForItem(product, store)}
+          label="Illustration"
+          className={`h-full w-full object-cover transition-transform duration-500 ease-out motion-reduce:transition-none motion-safe:group-hover:scale-[1.03] ${outOfStock ? 'saturate-50 brightness-90' : ''}`}
+          labelClassName="absolute bottom-3 left-3 max-w-[calc(100%-4rem)] rounded bg-white/95 px-2 py-1 text-[10px] text-forest-muted"
+        />
 
         {/* Category chip — glass overlay */}
         {categoryLabel && (
@@ -117,9 +95,9 @@ export function ProductCard({
             className={[
               'absolute bottom-2 right-2 flex h-7 w-7 items-center justify-center rounded-full sm:h-8 sm:w-8',
               'bg-cobalt text-white',
-              'shadow-[0_2px_8px_rgba(56,61,146,0.45)]',
+              'shadow-[0_2px_8px_rgba(37, 125, 193,0.45)]',
               'transition-all duration-200',
-              'group-hover:scale-[1.14] group-hover:bg-brand-gradient group-hover:shadow-[0_4px_14px_rgba(56,61,146,0.55)]',
+              'group-hover:scale-[1.14] group-hover:bg-brand-gradient group-hover:shadow-[0_4px_14px_rgba(37, 125, 193,0.55)]',
             ].join(' ')}
             aria-hidden="true"
           >
@@ -131,7 +109,7 @@ export function ProductCard({
               stroke="currentColor"
               strokeWidth={2.5}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              <path strokeLinecap="round" strokeLinejoin="round" d={flow === 'checkout' ? 'M12 4.5v15m7.5-7.5h-15' : 'M5 12h14m-6-6 6 6-6 6'} />
             </svg>
           </span>
         )}
@@ -148,7 +126,7 @@ export function ProductCard({
             <span className="text-[10px] font-medium text-forest-muted">from</span>
           )}
           <span className="text-sm font-bold text-cobalt sm:text-[15px]">
-            {formatCurrency(displayPrice, currency)}
+            {flow === 'booking' ? 'See appointment price' : flow === 'quote' ? 'Price after assessment' : flow === 'custom_request' || flow === 'wholesale' ? 'Price after request' : formatCurrency(displayPrice, currency)}
           </span>
         </div>
 
@@ -165,7 +143,16 @@ export function ProductCard({
             </span>
           </div>
         )}
+        <span className="mt-2 text-xs font-semibold text-cobalt">{actionLabel} <span aria-hidden="true">→</span></span>
       </div>
+    </>;
+  return flow === 'checkout' ? (
+    <AddToCartButton product={product} onAdd={onAdd} currency={currency} disabled={outOfStock} className={className}>
+      {content}
     </AddToCartButton>
+  ) : (
+    <Link to={actionPath ?? '#shop'} className={className} aria-label={`${actionLabel}: ${product.name}`}>
+      {content}
+    </Link>
   );
 }

@@ -15,10 +15,12 @@ function storeTypeLabel(store: Store): string {
 }
 
 function deliveryHint(store: Store): string | null {
+  const category = resolveStoreCategory(store);
+  if (category === 'ON_PREMISE_SERVICE' || category === 'ON_SITE_SERVICE') return null;
   const flat = parseFloat(store.delivery_fee_flat as string);
   if (isNaN(flat)) return null;
   if (flat === 0) return 'Free delivery';
-  const currency = store.currency ?? 'GHS';
+  const currency = store.currency ?? 'ZMW';
   return `${formatCurrency(flat, currency)} delivery`;
 }
 
@@ -43,7 +45,7 @@ export function StoreCard({ store }: { store: Store }) {
         'group relative flex flex-col overflow-hidden rounded-2xl bg-white',
         'shadow-[0_1px_4px_rgba(0,0,0,0.06),0_6px_18px_-2px_rgba(0,0,0,0.08)]',
         'transition-all duration-300 ease-out',
-        'hover:-translate-y-1 hover:shadow-[0_4px_22px_rgba(56,61,146,0.2),0_1px_4px_rgba(0,0,0,0.06)]',
+        'hover:-translate-y-1 hover:shadow-[0_4px_22px_rgba(37, 125, 193,0.2),0_1px_4px_rgba(0,0,0,0.06)]',
         'active:scale-[0.98] active:duration-100',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cobalt/40 focus-visible:ring-offset-2',
         isInactive ? 'opacity-75' : '',
@@ -101,7 +103,7 @@ export function StoreCard({ store }: { store: Store }) {
             'absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full',
             'bg-white/90 text-cobalt backdrop-blur-sm shadow-md',
             'transition-all duration-200',
-            'group-hover:scale-[1.12] group-hover:bg-brand-gradient group-hover:text-white group-hover:shadow-[0_4px_14px_rgba(56,61,146,0.55)]',
+            'group-hover:scale-[1.12] group-hover:bg-brand-gradient group-hover:text-white group-hover:shadow-[0_4px_14px_rgba(37, 125, 193,0.55)]',
           ].join(' ')}
           aria-hidden="true"
         >
@@ -151,7 +153,7 @@ export function StoreCard({ store }: { store: Store }) {
                     d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
                   />
                 </svg>
-                {store.ussd_code}
+                USSD {store.ussd_code}
               </span>
             )}
             {delivery && (

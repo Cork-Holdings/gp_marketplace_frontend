@@ -1,0 +1,37 @@
+.platform-manager {max-width:1400px;margin:auto;color:#10182B}
+.platform-manager h1 {font:700 clamp(24px,3vw,32px)/1.2 'DM Sans',sans-serif;margin-bottom:8px}
+.platform-manager>header {display:flex;gap:24px;align-items:center;justify-content:space-between;margin:0 0 24px}
+.platform-manager p {line-height:1.6;color:#56657A}
+.platform-manager button,.platform-manager .platform-button {min-height:44px;border:1px solid #D7E0EB;border-radius:8px;padding:10px 16px;background:#fff;font-weight:600;color:#10182B}
+.platform-manager button.primary {background:#1C639A;color:#fff;border-color:#1C639A}
+.platform-manager button:disabled {opacity:.5;cursor:not-allowed}
+.platform-manager button:focus-visible,.platform-manager input:focus-visible,.platform-manager textarea:focus-visible {outline:2px solid #257DC1;outline-offset:2px}
+.platform-manager .platform-notice {background:#EAF5FB;border-left:3px solid #257DC1;padding:14px 18px;margin:16px 0;line-height:1.6}
+.platform-manager .platform-error {background:#FFF2F2;color:#9B2424;border-left-color:#C43838}
+.platform-manager .platform-success {background:#EBF8F0;color:#17613E;border-left-color:#238451}
+.platform-editor-layout {display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,1fr);gap:24px;align-items:start}
+.platform-editor {background:#fff;border:1px solid #DFE6EF;padding:24px;border-radius:12px;display:grid;gap:18px}
+.platform-editor h2 {font:700 21px 'DM Sans',sans-serif}
+.platform-editor label {display:grid;gap:7px;font-size:13px;font-weight:600;min-width:0}
+.platform-editor input:not([type=checkbox]),.platform-editor textarea,.platform-editor select {width:100%;min-height:44px;border:1px solid #C9D4E2;background:#fff;border-radius:7px;padding:10px 12px;font-size:14px;font-weight:400;color:#10182B}
+.platform-editor textarea {min-height:110px;resize:vertical}
+.platform-editor .platform-check {display:flex;gap:10px;align-items:center;font-weight:500;min-height:32px}
+.platform-editor input[type=checkbox] {width:18px;height:18px;accent-color:#257DC1}
+.platform-editor fieldset {border-top:1px solid #DFE6EF;padding-top:12px}
+.platform-editor legend {font-weight:600;padding-bottom:10px}
+.platform-two {display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.platform-actions {display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.platform-manager table {width:100%;border-collapse:collapse;background:#fff}
+.platform-manager th,.platform-manager td {text-align:left;padding:14px 12px;border-bottom:1px solid #E4EAF1;vertical-align:top;font-size:13px}
+.platform-manager th {background:#F3F6FA;font-weight:600;color:#56657A}
+.platform-manager td small {display:block;color:#67778C;margin-top:4px}
+.platform-table-wrap {overflow-x:auto;border:1px solid #DFE6EF;border-radius:10px}
+.platform-status {display:inline-flex;align-items:center;border-radius:4px;padding:4px 7px;background:#EAF5FB;color:#1C639A;font-size:11px;font-weight:600}
+.platform-manager .platform-section {margin-top:32px}
+.platform-section h2 {font-size:21px;font-weight:700;margin-bottom:12px}
+.platform-deal-editor {border-top:1px solid #DFE6EF;padding-top:16px;display:grid;gap:14px}
+.platform-public-page {max-width:780px;margin:32px auto;padding:24px}
+.platform-public-page h1 {font:700 32px 'DM Sans',sans-serif;margin:24px 0 12px}
+.platform-public-page .body {white-space:pre-wrap;line-height:1.8;margin:24px 0}
+@media(max-width:1000px){.platform-editor-layout {grid-template-columns:1fr}.platform-editor {padding:20px}}
+@media(max-width:560px){.platform-manager>header {align-items:flex-start;flex-direction:column;gap:14px}.platform-two {grid-template-columns:1fr}.platform-editor{padding:16px}.platform-manager th,.platform-manager td {padding:12px 8px}.platform-manager>header button{width:100%}}

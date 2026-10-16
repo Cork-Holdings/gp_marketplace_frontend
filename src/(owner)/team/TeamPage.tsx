@@ -1,3 +1,5 @@
+import { RecordListTable } from '@/components/common/RecordListTable';
+import { userMessage } from '@/lib/userMessage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { rolesApi } from '@/lib/api/services';
@@ -179,7 +181,7 @@ export default function TeamPage() {
       resetCreateForm();
       await load();
     } catch (err: any) {
-      setFormError(err?.message ?? 'Could not create employee');
+      setFormError(userMessage(err, 'Could not create employee'));
     } finally {
       setSubmitting(false);
     }
@@ -213,7 +215,7 @@ export default function TeamPage() {
       setPinValue('');
       await load();
     } catch (err: any) {
-      setFormError(err?.message ?? 'Could not update PIN');
+      setFormError(userMessage(err, 'Could not update PIN'));
     } finally {
       setSubmitting(false);
     }
@@ -337,7 +339,7 @@ export default function TeamPage() {
       ) : (
         <div className="dashboard-card overflow-hidden p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left text-sm">
+            <RecordListTable className="w-full min-w-[760px] text-left text-sm">
               <thead>
                 <tr className="border-b border-cream-dark bg-cream/60 text-[11px] font-medium uppercase tracking-wide text-forest-muted">
                   <th className="px-4 py-3">Employee</th>
@@ -445,7 +447,7 @@ export default function TeamPage() {
                   );
                 })}
               </tbody>
-            </table>
+            </RecordListTable>
           </div>
           <div className="border-t border-cream-dark bg-cream/30 px-4 py-2.5 text-xs text-forest-muted">
             Showing {filtered.length} of {members.length} employees

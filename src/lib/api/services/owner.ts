@@ -12,8 +12,11 @@ import type { MenuCategory } from '@/types/menuCategory';
 import type { ModifierGroup } from '@/types/modifier';
 import type { Table } from '@/types/table';
 import type { Product } from '@/types/product';
+import type { DashboardPeriod, OwnerDashboard } from '@/types/ownerDashboard';
 
 export const OwnerService = {
+  dashboard: (storeId: string, period: DashboardPeriod, offset = 0, signal?: AbortSignal): Promise<OwnerDashboard> =>
+    secureApi.get(withQuery(`/owner/stores/${storeId}/dashboard`, { period, offset, limit: 6 }), { signal }),
   listStores: () => secureApi.get(getRoute('LIST_OWNER_STORES')),
   createStore: (payload: unknown) => secureApi.post(getRoute('CREATE_OWNER_STORE'), payload),
   getStore: (storeId: string) => secureApi.get(getRoute('GET_OWNER_STORE', { storeId })),
@@ -42,9 +45,10 @@ export const OwnerService = {
   },
   deleteProduct: (storeId: string, productId: string) =>
     secureApi.delete(getRoute('DELETE_OWNER_PRODUCT', { storeId, productId })),
-  listOrders: (storeId: string, status?: string) =>
+  listOrders: (storeId: string, params?: string | Record<string, string | number>, signal?: AbortSignal) =>
     secureApi.get(
-      withQuery(getRoute('LIST_OWNER_ORDERS', { storeId }), status ? { status } : {}),
+      withQuery(getRoute('LIST_OWNER_ORDERS', { storeId }), typeof params === 'string' ? { status: params } : params ?? {}),
+      { signal },
     ),
   createCounterOrder: (storeId: string, payload: unknown) =>
     secureApi.post(getRoute('CREATE_OWNER_ORDER', { storeId }), payload),
@@ -58,6 +62,54 @@ export const OwnerService = {
     secureApi.get(withQuery(getRoute('LIST_OWNER_TRANSACTIONS', { storeId }), params)),
   getTransaction: (storeId: string, transactionId: string) =>
     secureApi.get(getRoute('GET_OWNER_TRANSACTION', { storeId, transactionId })),
+  listServiceQuotes: (storeId: string, params: Record<string, string | number> = {}) =>
+    secureApi.get(withQuery(getRoute('LIST_OWNER_SERVICE_QUOTES', { storeId }), params)),
+  createServiceQuote: (storeId: string, payload: unknown) =>
+    secureApi.post(getRoute('LIST_OWNER_SERVICE_QUOTES', { storeId }), payload),
+  replaceServiceQuoteDraft: (storeId: string, quoteId: string, payload: unknown) =>
+    secureApi.put(`/owner/stores/${storeId}/service-quotes/${quoteId}`, payload),
+  updateServiceQuoteStatus: (storeId: string, quoteId: string, status: string) =>
+    secureApi.patch(getRoute('OWNER_SERVICE_QUOTE_STATUS', { storeId, quoteId }), { status }),
+  listServiceJobs: (storeId: string, params: Record<string, string | number> = {}) =>
+    secureApi.get(withQuery(getRoute('LIST_OWNER_SERVICE_JOBS', { storeId }), params)),
+  createServiceJob: (storeId: string, payload: unknown) =>
+    secureApi.post(getRoute('LIST_OWNER_SERVICE_JOBS', { storeId }), payload),
+  updateServiceJobStatus: (storeId: string, jobId: string, status: string) =>
+    secureApi.patch(getRoute('OWNER_SERVICE_JOB_STATUS', { storeId, jobId }), { status }),
+  listJobEvidence: (storeId: string, jobId: string) =>
+    secureApi.get(getRoute('OWNER_JOB_EVIDENCE', { storeId, jobId })),
+  addJobEvidence: (storeId: string, jobId: string, payload: unknown) =>
+    secureApi.post(getRoute('OWNER_JOB_EVIDENCE', { storeId, jobId }), payload),
+  assignServiceJob: (storeId: string, jobId: string, assigneeId: string) =>
+    secureApi.patch(getRoute('OWNER_JOB_ASSIGNMENT', { storeId, jobId }), { assignee_id: assigneeId }),
+  listReservations: (storeId: string, params: Record<string, string | number> = {}) =>
+    secureApi.get(withQuery(getRoute('LIST_OWNER_RESERVATIONS', { storeId }), params)),
+  createReservation: (storeId: string, payload: unknown) =>
+    secureApi.post(getRoute('LIST_OWNER_RESERVATIONS', { storeId }), payload),
+  updateReservationStatus: (storeId: string, reservationId: string, status: string) =>
+    secureApi.patch(getRoute('OWNER_RESERVATION_STATUS', { storeId, reservationId }), { status }),
+  listResources: (storeId: string) => secureApi.get(getRoute('OWNER_RESOURCES', { storeId })),
+  listBookableServices: (storeId: string) => secureApi.get(getRoute('OWNER_BOOKABLE_SERVICES', { storeId })),
+  createBookableService: (storeId: string, payload: unknown) => secureApi.post(getRoute('OWNER_BOOKABLE_SERVICES', { storeId }), payload),
+  setBookableServiceActive: (storeId: string, serviceId: string, isActive: boolean) =>
+    secureApi.patch(getRoute('OWNER_BOOKABLE_SERVICE', { storeId, serviceId }), { is_active: isActive }),
+  createResource: (storeId: string, payload: unknown) => secureApi.post(getRoute('OWNER_RESOURCES', { storeId }), payload),
+  setResourceActive: (storeId: string, resourceId: string, isActive: boolean) =>
+    secureApi.patch(getRoute('OWNER_RESOURCE', { storeId, resourceId }), { is_active: isActive }),
+  listCustomOrders: (storeId: string, params: Record<string, string | number> = {}) =>
+    secureApi.get(withQuery(getRoute('LIST_OWNER_CUSTOM_ORDERS', { storeId }), params)),
+  createCustomOrder: (storeId: string, payload: unknown) =>
+    secureApi.post(getRoute('LIST_OWNER_CUSTOM_ORDERS', { storeId }), payload),
+  updateCustomOrderStatus: (storeId: string, orderId: string, status: string) =>
+    secureApi.patch(getRoute('OWNER_CUSTOM_ORDER_STATUS', { storeId, orderId }), { status }),
+  offerCustomOrder: (storeId: string, orderId: string, payload: unknown) =>
+    secureApi.put(getRoute('OWNER_CUSTOM_ORDER_OFFER', { storeId, orderId }), payload),
+  listCustomOrderLines: (storeId: string, orderId: string) =>
+    secureApi.get(getRoute('OWNER_CUSTOM_ORDER_LINES', { storeId, orderId })),
+  addCustomOrderLine: (storeId: string, orderId: string, payload: unknown) =>
+    secureApi.post(getRoute('OWNER_CUSTOM_ORDER_LINES', { storeId, orderId }), payload),
+  allocateCustomOrderLine: (storeId: string, orderId: string, lineId: string, payload: unknown) =>
+    secureApi.patch(getRoute('OWNER_CUSTOM_ORDER_LINE', { storeId, orderId, lineId }), payload),
 
   listMenuCategories: async (storeId: string): Promise<MenuCategory[]> => {
     const data = await secureApi.get(getRoute('LIST_OWNER_MENU_CATEGORIES', { storeId }));

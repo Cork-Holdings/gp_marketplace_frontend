@@ -1,1 +1,1 @@
-export { PortalLayout as PortalDashboardLayout, PortalLayout as default } from '../components/portal/PortalLayout';
+export { ReferencePortalLayout as PortalDashboardLayout, ReferencePortalLayout as default } from '../components/reference/ReferencePortalLayout';

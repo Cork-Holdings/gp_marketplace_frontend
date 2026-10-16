@@ -1,18 +1,7 @@
 import { Link } from 'react-router-dom';
 
-function GeepayLogo({ className = 'h-10 w-10' }) {
-  return (
-    <div
-      className={`flex items-center justify-center rounded-2xl bg-forest-dark ring-1 ring-white/10 ${className}`}
-      aria-hidden="true"
-    >
-      <svg viewBox="0 0 40 40" className="h-6 w-6" fill="none">
-        <circle cx="20" cy="20" r="14" stroke="#D1D2EF" strokeWidth="2" />
-        <path d="M20 8a12 12 0 0 1 0 24" fill="#00afeb" stroke="#D1D2EF" strokeWidth="1.5" />
-        <circle cx="20" cy="20" r="4" fill="#ECECF8" />
-      </svg>
-    </div>
-  );
+function GeepayLogo({ className = '' }) {
+  return <img src="/brand/geepay-wordmark.png" alt="GeePay" width={1774} height={887} className={className} style={{width:128,height:64,objectFit:'contain',background:'#fff',borderRadius:6}} />;
 }
 
 export function OnboardingLayout({ title, subtitle, steps, currentStep, children, footer }) {
@@ -35,6 +24,7 @@ export function OnboardingLayout({ title, subtitle, steps, currentStep, children
               return (
                 <div
                   key={step.id}
+                  aria-current={active ? 'step' : undefined}
                   className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm ${
                     active ? 'bg-white/15 text-cream' : done ? 'text-sage' : 'text-cream/50'
                   }`}
@@ -52,7 +42,7 @@ export function OnboardingLayout({ title, subtitle, steps, currentStep, children
             })}
           </nav>
           <p className="relative z-10 text-xs text-cream/50">
-            Secure onboarding · Documents encrypted at rest
+            Verification documents are submitted for review. Registration is not trading approval.
           </p>
         </aside>
 
@@ -61,6 +51,7 @@ export function OnboardingLayout({ title, subtitle, steps, currentStep, children
             <GeepayLogo className="h-9 w-9" />
             <StepIndicator steps={steps} currentStep={currentStep} compact />
           </div>
+          <div className="mb-5 lg:hidden"><h1 className="text-xl font-semibold text-charcoal">{title}</h1>{subtitle && <p className="mt-2 text-sm leading-relaxed text-forest-muted">{subtitle}</p>}</div>
 
           <div className="mx-auto flex w-full max-w-lg flex-1 flex-col">
             <div className="mb-6 hidden lg:block">
@@ -109,6 +100,7 @@ export function OnboardingNav({ onBack, onNext, nextLabel = 'Continue', submitti
         <button
           type="button"
           onClick={onBack}
+        disabled={submitting}
           className="rounded-xl px-4 py-2.5 text-sm font-medium text-forest-muted hover:bg-cream"
         >
           ← Back
@@ -120,6 +112,7 @@ export function OnboardingNav({ onBack, onNext, nextLabel = 'Continue', submitti
         type="button"
         onClick={onNext}
         disabled={submitting || nextDisabled}
+        aria-busy={submitting}
         className="auth-sign-in-btn rounded-xl px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
       >
         {submitting ? 'Please wait…' : nextLabel}

@@ -1,14 +1,21 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/lib/context/useAuth';
 
 const LINKS = [
   { to: '/account/ledger', label: 'Orders' },
+  { to: '/account/quotes', label: 'Quotes' },
+  { to: '/account/jobs', label: 'Jobs' },
+  { to: '/account/bookings', label: 'Bookings' },
+  { to: '/account/custom-orders', label: 'Custom requests' },
   { to: '/account/transactions', label: 'Transactions' },
 ] as const;
 
 export function AccountNav() {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   return (
     <nav
-      className="flex gap-1 rounded-lg border border-cream-dark bg-cream/40 p-1"
+      className="customer-account-nav"
       aria-label="Account"
     >
       {LINKS.map(({ to, label }) => (
@@ -17,17 +24,13 @@ export function AccountNav() {
           to={to}
           end
           className={({ isActive }) =>
-            [
-              'flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition',
-              isActive
-                ? 'bg-white text-charcoal shadow-sm'
-                : 'text-forest-muted hover:text-forest',
-            ].join(' ')
+            isActive ? 'customer-account-link is-active' : 'customer-account-link'
           }
         >
           {label}
         </NavLink>
       ))}
+      <button type="button" onClick={() => { logout(); navigate('/login'); }} className="customer-account-link customer-signout">Sign out</button>
     </nav>
   );
 }

@@ -1,3 +1,4 @@
+import { RecordListTable } from '@/components/common/RecordListTable';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { formatCurrency } from '@/lib/utils';
@@ -608,7 +609,7 @@ export function MenuItemsView({
       ) : viewMode === 'list' ? (
         <div className="overflow-hidden rounded-xl bg-white ring-1 ring-cream-dark">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-left text-sm">
+            <RecordListTable className="w-full min-w-[560px] text-left text-sm">
               <thead>
                 <tr className="border-b border-cream-dark text-xs text-forest-muted">
                   <th className="px-3 py-2.5 font-medium">Item</th>
@@ -633,7 +634,7 @@ export function MenuItemsView({
                   />
                 ))}
               </tbody>
-            </table>
+            </RecordListTable>
           </div>
         </div>
       ) : grouped && categoryFilter === 'all' ? (

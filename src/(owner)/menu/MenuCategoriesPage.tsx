@@ -15,6 +15,8 @@ import { useConfirm } from '@/hooks/useConfirm';
 import { formatCurrency } from '@/lib/utils';
 import type { MenuCategory } from '@/types/menuCategory';
 import type { Product } from '@/types/product';
+import { suggestedMenuSection } from '@/lib/menuSuggestions';
+import './menu-placement.css';
 
 type PageTab = 'sections' | 'placement';
 
@@ -156,8 +158,8 @@ function PlacementRow({
   product,
   categories,
   assignedId,
-  onAssigned,
-  onSaveMessage,
+  onMove,
+  busy,
 }: {
   storeId: string;
   product: Product;
@@ -165,6 +167,8 @@ function PlacementRow({
   assignedId?: string;
   onAssigned: () => void;
   onSaveMessage: (message: string) => void;
+  onMove: (product: Product, categoryId: string) => Promise<void>;
+  busy: boolean;
 }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
@@ -173,14 +177,7 @@ function PlacementRow({
     setSaving(true);
     setError(false);
     try {
-      await ownerApi.assignProductCategory(storeId, product.id, categoryId || null);
-      onAssigned();
-      const categoryName = categories.find((c) => c.id === categoryId)?.name;
-      onSaveMessage(
-        categoryId
-          ? `“${product.name}” → ${categoryName}`
-          : `“${product.name}” unassigned`,
-      );
+      await onMove(product, categoryId);
     } catch {
       setError(true);
     } finally {
@@ -189,16 +186,20 @@ function PlacementRow({
   };
 
   return (
-    <div className="flex items-center gap-3 px-3 py-2.5 hover:bg-cream/40">
+    <div className="menu-placement-row flex items-center gap-3 px-3 py-2.5 hover:bg-cream/40">
+      <button type="button" className="menu-drag-handle" draggable={!busy && !saving} disabled={busy || saving} aria-label={`Drag ${product.name}; use the section selector to move without dragging`} title="Drag to a section, or use the section selector" onDragStart={event => { event.dataTransfer.setData('application/x-geepay-menu-item', `${storeId}:${product.id}`); event.dataTransfer.effectAllowed = 'move'; }}>
+        <svg width="18" height="24" viewBox="0 0 18 24" fill="currentColor" aria-hidden="true">{[6,12,18].flatMap(y => [6,12].map(x => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.3" />))}</svg>
+      </button>
       <ItemThumb product={product} />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-charcoal">{product.name}</p>
         <p className="text-xs tabular-nums text-forest-muted">{formatCurrency(product.price)}</p>
         {error ? <p className="text-xs text-red-600">Couldn’t save — try again</p> : null}
+        {!assignedId && suggestedMenuSection(product.name) && categories.some(c => c.name.toLowerCase() === suggestedMenuSection(product.name)?.toLowerCase()) && <button type="button" className="menu-suggestion" disabled={saving || busy} onClick={() => handleChange(categories.find(c => c.name.toLowerCase() === suggestedMenuSection(product.name)?.toLowerCase())!.id)}>Suggested: {suggestedMenuSection(product.name)} · Move</button>}
       </div>
       <select
         value={assignedId ?? ''}
-        disabled={saving}
+        disabled={saving || busy}
         onChange={(e) => handleChange(e.target.value)}
         aria-label={`Section for ${product.name}`}
         className="h-9 max-w-[10rem] shrink-0 appearance-none truncate rounded-lg bg-white px-2.5 text-xs font-medium text-charcoal ring-1 ring-cream-dark focus:outline-none focus:ring-2 focus:ring-forest/30 disabled:opacity-50 sm:max-w-[12rem]"
@@ -228,6 +229,10 @@ export default function MenuCategoriesPage() {
   const [itemSearch, setItemSearch] = useState('');
   const [unassignedOnly, setUnassignedOnly] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [moving, setMoving] = useState(false);
+  const movingRef = useRef(false);
+  const [moveError, setMoveError] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
   const saveMessageTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const {
@@ -314,8 +319,27 @@ export default function MenuCategoriesPage() {
     saveMessageTimer.current = setTimeout(() => setSaveMessage(null), 2800);
   };
 
+  const moveItem = async (product: Product, categoryId: string) => {
+    if (!selectedStoreId || movingRef.current || !products.some(p => p.id === product.id) || (categoryId && !categories.some(c => c.id === categoryId)) || (assignments[product.id] || '') === categoryId) return;
+    movingRef.current = true; setMoving(true); setMoveError(null);
+    try {
+      await ownerApi.assignProductCategory(selectedStoreId, product.id, categoryId || null);
+      await retryProducts();
+      showSaveMessage(`${product.name} moved to ${categories.find(c => c.id === categoryId)?.name || 'Unassigned'}.`);
+    } catch {
+      setMoveError('The move could not be saved. The item has not been moved here. Check the list and try again.');
+      throw new Error('Menu placement failed');
+    } finally { movingRef.current = false; setMoving(false); setDropTarget(null); }
+  };
+  const dropItem = (event: React.DragEvent, categoryId: string) => {
+    event.preventDefault(); setDropTarget(null);
+    const token = event.dataTransfer.getData('application/x-geepay-menu-item');
+    const product = products.find(p => `${selectedStoreId}:${p.id}` === token);
+    if (product) void moveItem(product, categoryId).catch(() => {});
+  };
+
   if (!isStoreOwner) return <Navigate to="/portal" replace />;
-  if (!capabilities.isFood) return <Navigate to="/portal/owner/products" replace />;
+  if (selectedStore && !capabilities.isFood) return <Navigate to="/portal/owner/products" replace />;
 
   const openCreateCategory = () => {
     setEditingCategory(null);
@@ -580,6 +604,12 @@ export default function MenuCategoriesPage() {
             </div>
           ) : (
             <div className="space-y-4">
+              <section className="menu-drop-section" aria-label="Move items to a section">
+                <h2>Place items in sections</h2><p>Drag an item’s handle onto a section below, or use its section selector.</p>
+                <div className="menu-drop-targets">{[...sortedCategories.map(c => ({ id: c.id, name: c.name })), { id: '', name: 'Unassigned' }].map(c => <div key={c.id} className={`menu-drop-target${dropTarget === c.id ? ' is-over' : ''}${moving ? ' is-busy' : ''}`} onDragOver={event => { if (!moving && event.dataTransfer.types.includes('application/x-geepay-menu-item')) { event.preventDefault(); event.dataTransfer.dropEffect = 'move'; setDropTarget(c.id); } }} onDragLeave={() => setDropTarget(null)} onDrop={event => dropItem(event, c.id)}><strong>{c.name}</strong><span>{products.filter(p => (assignments[p.id] || '') === c.id).length} items · Drop here</span></div>)}</div>
+                <div className="menu-section-suggestions">{Array.from(new Set(products.filter(p => !p.menu_category_id).map(p => suggestedMenuSection(p.name)).filter((name): name is string => Boolean(name)))).filter(name => !categories.some(c => c.name.toLowerCase() === name.toLowerCase())).map(name => <button key={name} type="button" disabled={moving || submitting} onClick={() => { setEditingCategory(null); setForm({ name, description: '' }); setCategoryModalOpen(true); }}>Suggested section: {name} · Add</button>)}</div>
+                {moving && <p role="status">Saving placement…</p>}{moveError && <p className="menu-placement-error" role="alert">{moveError}</p>}
+              </section>
               <div className="space-y-3">
                 <div className="relative">
                   <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-forest-muted/70">
@@ -654,6 +684,7 @@ export default function MenuCategoriesPage() {
                         assignedId={assignments[p.id]}
                         onAssigned={retryProducts}
                         onSaveMessage={showSaveMessage}
+                      onMove={moveItem} busy={moving}
                       />
                     </div>
                   ))}
@@ -683,6 +714,7 @@ export default function MenuCategoriesPage() {
                                   assignedId={assignments[p.id]}
                                   onAssigned={retryProducts}
                                   onSaveMessage={showSaveMessage}
+                                  onMove={moveItem} busy={moving}
                                 />
                               </div>
                             ))}
@@ -708,6 +740,7 @@ export default function MenuCategoriesPage() {
                               assignedId={assignments[p.id]}
                               onAssigned={retryProducts}
                               onSaveMessage={showSaveMessage}
+                              onMove={moveItem} busy={moving}
                             />
                           </div>
                         ))}

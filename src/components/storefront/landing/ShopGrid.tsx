@@ -4,7 +4,7 @@ import { ErrorState } from '../../common/ErrorState';
 
 import { normalizeProductList } from '@/lib/normalizeApi';
 
-export function ShopGrid({ products, currency, onAdd, loading, error, onRetry, searchQuery = '' }) {
+export function ShopGrid({ products, currency, onAdd, loading, error, onRetry, searchQuery = '', store }) {
   if (loading) return <ProductGridSkeleton />;
   if (error) return <ErrorState error={error} onRetry={onRetry} title="Could not load products" />;
 
@@ -33,6 +33,7 @@ export function ShopGrid({ products, currency, onAdd, loading, error, onRetry, s
           product={product}
           currency={currency}
           onAdd={onAdd}
+          store={store}
           index={index}
         />
       ))}

@@ -3,6 +3,9 @@
  * JWT injection, structured Go errors, 401 refresh, request tracing.
  */
 
+import { errorMessage, UserFacingError, type ErrorContext } from '../userMessage';
+import { actionSuccessMessage, beginAction, showToast } from '../actionFeedback';
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
 
 type TokenGetter = () => string | null | undefined;
@@ -31,24 +34,23 @@ export function configureSecureFetch({
   if (handleUnauthorized) onUnauthorized = handleUnauthorized;
 }
 
-export interface ApiErrorInit {
-  status?: number;
-  code?: string;
+export interface ApiErrorInit extends ErrorContext {
   details?: unknown;
   requestId?: string | null;
 }
 
-export class ApiError extends Error {
+export class ApiError extends UserFacingError {
   status: number;
   code: string;
   details: unknown;
   requestId: string | null;
 
-  constructor(message: string, { status, code, details, requestId }: ApiErrorInit = {}) {
-    super(message);
+  constructor(message: string, { status, code, details, requestId, path, method }: ApiErrorInit = {}) {
+    super(errorMessage(message, { status, code, path, method }));
     this.name = 'ApiError';
     this.status = status ?? 0;
-    this.code = code ?? 'UNKNOWN';
+    this.code = /fully booked|resource.*conflict/i.test(message) && (status === 409 || status === 422)
+      ? 'BOOKING_TIME_UNAVAILABLE' : code ?? 'UNKNOWN';
     this.details = details ?? null;
     this.requestId = requestId ?? null;
   }
@@ -125,6 +127,8 @@ async function executeFetch(
       status: 0,
       code: 'OFFLINE',
       requestId,
+      path,
+      method,
     });
   }
 
@@ -161,6 +165,8 @@ async function executeFetch(
       code: 'NETWORK_ERROR',
       details: err.message,
       requestId,
+      path,
+      method,
     });
   }
 
@@ -183,6 +189,8 @@ async function executeFetch(
       code: data?.code ?? `HTTP_${response.status}`,
       details: data,
       requestId,
+      path,
+      method,
     });
   }
 
@@ -191,7 +199,18 @@ async function executeFetch(
 
 export async function secureFetch(path: string, options: SecureFetchOptions = {}) {
   const requestId = createRequestId();
-  return executeFetch(path, options, requestId);
+  const method = (options.method || 'GET').toUpperCase();
+  const mutation = /^(POST|PUT|PATCH|DELETE)$/.test(method);
+  const silent = /\/(?:login|logout|refresh)(?:\/|\?|$)/.test(path);
+  const endAction = mutation && !silent ? beginAction() : () => {};
+  try {
+    const result = await executeFetch(path, options, requestId);
+    if (mutation && !silent) showToast(actionSuccessMessage(path, method));
+    return result;
+  } catch (error) {
+    if (mutation && !silent && (error as Error)?.name !== 'AbortError') showToast(errorMessage(error), 'error');
+    throw error;
+  } finally { endAction(); }
 }
 
 export const secureApi = {

@@ -1,3 +1,4 @@
+import { RecordListTable } from '@/components/common/RecordListTable';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMarketplace } from '@/lib/context/useMarketplace';
 import { getStoreImageUrl } from '@/lib/normalizeApi';
@@ -9,6 +10,8 @@ import { Button } from '@/components/ui/button';
 function StoreRow({ store, onManage }) {
   const imageUrl = getStoreImageUrl(store);
   const isActive = store.is_active !== false;
+  const isPublic = store.public_trading_ready === true;
+  const status = !isActive ? 'Branch disabled' : store.merchant_active === false ? 'Business disabled' : store.merchant_verified === false ? 'Awaiting approval' : isPublic ? 'Published' : 'Visibility not confirmed';
 
   return (
     <tr className="hover:bg-cream/40">
@@ -39,10 +42,10 @@ function StoreRow({ store, onManage }) {
       <td className="px-4 py-3">
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-            isActive ? 'bg-sage text-forest' : 'bg-cream-dark text-forest-muted'
+            isPublic ? 'bg-sage text-forest' : 'bg-cream-dark text-forest-muted'
           }`}
         >
-          {isActive ? 'Active' : 'Inactive'}
+          {status}
         </span>
       </td>
       <td className="px-4 py-3">
@@ -54,14 +57,14 @@ function StoreRow({ store, onManage }) {
           >
             Manage branding
           </button>
-          <a
+          {isPublic && <a
             href={`/store/${store.slug}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-medium text-forest-muted hover:text-forest hover:underline"
           >
             Storefront
-          </a>
+          </a>}
         </div>
       </td>
     </tr>
@@ -83,7 +86,7 @@ export default function MerchantStoresPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-charcoal">Stores &amp; branches</h1>
           <p className="mt-1 text-sm text-forest-muted">
-            All storefronts linked to your merchant account.
+            Stores appear in the marketplace once a GeePay administrator approves your business verification. An enabled branch is not the same as a published storefront.
           </p>
         </div>
         <Button asChild>
@@ -105,7 +108,7 @@ export default function MerchantStoresPage() {
       ) : (
         <div className="dashboard-card overflow-hidden p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
+            <RecordListTable className="w-full min-w-[640px] text-left text-sm">
               <thead>
                 <tr className="border-b border-cream-dark bg-cream/60 text-[11px] font-medium uppercase tracking-wide text-forest-muted">
                   <th className="px-4 py-3">Store</th>
@@ -121,7 +124,7 @@ export default function MerchantStoresPage() {
                   <StoreRow key={store.id} store={store} onManage={handleManage} />
                 ))}
               </tbody>
-            </table>
+            </RecordListTable>
           </div>
         </div>
       )}

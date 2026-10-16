@@ -6,6 +6,9 @@ export const FALLBACK_STORE_TYPES = [
   { value: 'GROCERY', label: 'Grocery / Market', default_category: 'PHYSICAL_GOODS' },
   { value: 'PLUMBER', label: 'Plumbing Services', default_category: 'ON_SITE_SERVICE' },
   { value: 'ELECTRICIAN', label: 'Electrical Services', default_category: 'ON_SITE_SERVICE' },
+  { value: 'MOBILE_BARBER', label: 'Mobile Barber', default_category: 'ON_SITE_SERVICE' },
+  { value: 'CAKE_MAKER', label: 'Custom Cake Maker', default_category: 'PHYSICAL_GOODS' },
+  { value: 'WHOLESALER', label: 'Wholesaler', default_category: 'PHYSICAL_GOODS' },
 ];
 
 export const MANAGER_PLUS_ROLES = ['owner', 'admin', 'manager'];

@@ -6,6 +6,10 @@ import { Modal } from '@/components/shared/Modal';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ownerApi } from '@/lib/api/services';
 import { useMarketplace } from '@/lib/context/useMarketplace';
+import { WorkflowIcon } from '@/components/common/WorkflowIcon';
+import { OrderBoardEmpty } from '@/components/common/OrderBoardVisuals';
+import { orderLaneIcon } from '@/lib/orderBoardIcons';
+import { ErrorState } from '@/components/common/ErrorState';
 
 function modifiersFromItem(item) {
   const attrs = item?.variant_attributes ?? {};
@@ -92,7 +96,7 @@ function OrderMetaBadge({ children, tone = 'neutral' }) {
   );
 }
 
-function OrderCard({ order, onAdvance, nextStatus, laneColor, storeId }) {
+function OrderCard({ order, onAdvance, nextStatus, laneColor, storeId, busy }) {
   const total = order.total ?? order.total_amount;
   const isDineIn = order.fulfillment_type === 'dine_in';
   const isDelivery = order.fulfillment_type === 'delivery';
@@ -128,8 +132,8 @@ function OrderCard({ order, onAdvance, nextStatus, laneColor, storeId }) {
 
   const title = isDineIn ? `Table ${order.table_number ?? '—'}` : `Order #${orderRef}`;
   const itemCount = items?.length ?? 0;
-  const hasMore = itemCount > 4;
   const deliveryLine = isDelivery ? deliveryAddressLine(order) : null;
+  const hasMore = itemCount > 2 || Boolean(order.notes) || Boolean(deliveryLine);
 
   return (
     <li className={`rounded-xl border border-cream-dark bg-white p-4 shadow-sm border-t-[3px] ${laneColor}`}>
@@ -169,21 +173,21 @@ function OrderCard({ order, onAdvance, nextStatus, laneColor, storeId }) {
         )}
       </div>
 
-      {deliveryLine && (
+      {expanded && deliveryLine && (
         <p className="mt-2 text-sm leading-snug text-charcoal">
           <span className="font-medium text-forest-muted">Deliver to: </span>
           {deliveryLine}
         </p>
       )}
 
-      {order.notes && (
+      {expanded && order.notes && (
         <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
           <p className="text-xs font-medium uppercase tracking-wide text-amber-800">Order note</p>
           <p className="mt-0.5 text-sm text-amber-950">{order.notes}</p>
         </div>
       )}
 
-      <OrderItemsList items={items} loading={itemsLoading} error={itemsError} limit={expanded ? null : 4} />
+      <OrderItemsList items={items} loading={itemsLoading} error={itemsError} limit={expanded ? null : 2} />
 
       {hasMore && (
         <button
@@ -192,12 +196,13 @@ function OrderCard({ order, onAdvance, nextStatus, laneColor, storeId }) {
           className="mt-2 text-sm font-medium text-forest hover:underline"
           aria-expanded={expanded}
         >
-          {expanded ? 'Show fewer items' : `Show all ${itemCount} items`}
+          {expanded ? 'Hide details' : 'View full ticket'}
         </button>
       )}
 
+      {order.status === 'pending_payment' && <p className="mt-2 text-xs text-forest-muted">Waiting for verified payment before preparation.</p>}
       {nextStatus && (
-        <Button type="button" size="sm" className="mt-4 w-full text-sm" onClick={() => onAdvance(order, nextStatus)}>
+        <Button type="button" size="sm" className="mt-3 w-full text-sm" disabled={busy || order.status === 'pending_payment'} onClick={() => { void onAdvance(order, nextStatus); }}>
           →{' '}
           {isDineIn && nextStatus === 'ready_for_dispatch'
             ? 'Ready to Serve'
@@ -280,6 +285,8 @@ export function DispatchPanel({ order, open, onClose, onDispatch }) {
 export function FoodOrderKanban({ orders, lanes, getNextStatus, onStatusChange, store: _store }) {
   const { selectedStoreId } = useMarketplace();
   const [dispatchOrder, setDispatchOrder] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<unknown>(null);
 
   const grouped = lanes.reduce((acc, lane) => {
     acc[lane.key] = orders.filter((o) => lane.statuses.includes(o.status ?? 'pending_payment'));
@@ -298,35 +305,43 @@ export function FoodOrderKanban({ orders, lanes, getNextStatus, onStatusChange, 
   };
 
   const handleAdvance = async (order, nextStatus) => {
+    if (busy || order.status === 'pending_payment') return;
     if (nextStatus === 'dispatched' && order.fulfillment_type === 'delivery') {
       setDispatchOrder(order);
       return;
     }
-    await onStatusChange?.(order.id, { status: nextStatus });
+    setBusy(true); setActionError(null);
+    try { await onStatusChange?.(order.id, { status: nextStatus }); }
+    catch (error) { setActionError(error); }
+    finally { setBusy(false); }
   };
+
+  if (orders.length === 0) return <OrderBoardEmpty lanes={lanes} />;
 
   return (
     <>
-      <div className="flex gap-4 overflow-x-auto pb-2">
+      {actionError && <ErrorState error={actionError} />}
+      <div className="order-stage-grid" aria-label="Order stages">
         {lanes.map((lane) => {
           const laneOrders = grouped[lane.key] ?? [];
           return (
             <div
               key={lane.key}
-              className="flex w-[min(100%,22rem)] shrink-0 flex-col rounded-2xl border border-cream-dark bg-cream/40"
+              className="order-stage-lane flex min-w-0 flex-col rounded-xl border border-cream-dark bg-cream/40"
             >
-              <div className="sticky top-0 z-10 rounded-t-2xl border-b border-cream-dark bg-white/95 px-4 py-3 backdrop-blur-sm">
-                <h3 className="flex items-center justify-between text-sm font-semibold text-charcoal">
-                  <span>{lane.label}</span>
+              <div className="rounded-t-xl border-b border-cream-dark bg-white px-4 py-3">
+                <h3 className="flex items-center justify-between gap-2 text-sm font-semibold text-charcoal">
+                  <span className="flex min-w-0 items-center gap-2"><WorkflowIcon name={orderLaneIcon(lane.key)} size={18} />{lane.label}</span>
                   <span className="rounded-full bg-cream px-2.5 py-0.5 text-xs font-bold tabular-nums text-forest">
                     {laneOrders.length}
                   </span>
                 </h3>
               </div>
 
-              <ul className="min-h-[12rem] max-h-[calc(100vh-18rem)] space-y-3 overflow-y-auto p-3">
+              <ul className="space-y-3 p-3">
                 {laneOrders.length === 0 ? (
-                  <li className="rounded-xl border border-dashed border-cream-dark bg-white/60 px-4 py-10 text-center text-sm text-forest-muted">
+                  <li className="flex flex-col items-center gap-2 px-4 py-6 text-center text-sm text-forest-muted">
+                    <WorkflowIcon name={orderLaneIcon(lane.key)} size={24} />
                     No orders in this stage
                   </li>
                 ) : (
@@ -340,6 +355,7 @@ export function FoodOrderKanban({ orders, lanes, getNextStatus, onStatusChange, 
                         laneColor={laneColors[lane.key]}
                         onAdvance={handleAdvance}
                         storeId={selectedStoreId}
+                        busy={busy}
                       />
                     );
                   })

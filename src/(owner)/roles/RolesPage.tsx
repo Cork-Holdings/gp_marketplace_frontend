@@ -1,3 +1,4 @@
+import { userMessage } from '@/lib/userMessage';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { rolesApi } from '@/lib/api/services';
@@ -187,7 +188,7 @@ export default function RolesPage() {
       setCreateOpen(false);
       await load();
     } catch (err: any) {
-      setFormError(err?.message ?? 'Could not create role');
+      setFormError(userMessage(err, 'Could not create role'));
     } finally {
       setSubmitting(false);
     }

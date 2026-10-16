@@ -1,0 +1,15 @@
+@import './customer-workflow-list.css';
+.record-list{position:relative;width:100%;min-width:0;color:#283957}.record-list-scroll{position:relative;overflow-x:auto;max-width:100%}
+.record-list .record-list-control{width:42px!important;min-width:42px;padding:6px!important;text-align:center}
+.record-list-control button{min-width:32px;min-height:40px;border-radius:6px;color:#257DC1;font-size:23px}
+.record-list-control button:hover{background:#edf1fa}.record-list-control button:focus-visible{outline:2px solid #30C5F4;outline-offset:2px}
+.record-list-group{padding:14px 20px 8px;font-size:13px;font-weight:650}.record-list-selected{background:#f0f3fc!important}
+.record-list-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:20px;min-width:0}
+.record-list-facts dt{font-size:12px;color:#65718e;margin-bottom:5px}.record-list-facts dd{font-size:13px;margin:0;overflow-wrap:anywhere}
+.record-list-facts dd :is(button,a){display:inline-flex;margin:2px 6px 2px 0}
+.record-list-expanded{background:#f6f8fd}.record-list-expanded>td{padding:0!important}
+.record-list-split{display:grid;grid-template-columns:minmax(0,2fr) minmax(220px,1fr);align-items:start}
+.record-list-split>aside{border-left:1px solid #e7ebf3;min-width:0}.record-list-split .record-list-facts{grid-template-columns:1fr}
+.record-list-table.is-ledger :is(td,th){padding-top:8px!important;padding-bottom:8px!important;font-variant-numeric:tabular-nums}
+@media(max-width:900px){.record-list-split{grid-template-columns:1fr}.record-list-split>aside{border-left:0;border-top:1px solid #e7ebf3}}
+@media(max-width:500px){.record-list-facts{grid-template-columns:1fr;padding:16px}}

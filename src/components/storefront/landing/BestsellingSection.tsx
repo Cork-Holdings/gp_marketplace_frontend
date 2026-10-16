@@ -106,6 +106,7 @@ export function BestsellingSection({
                   product={product}
                   currency={currency}
                   onAdd={onAdd}
+                  store={store}
                   index={index}
                 />
               </div>

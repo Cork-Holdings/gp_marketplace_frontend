@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { userMessage } from '@/lib/userMessage';
 import { Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/context/useAuth';
 import { PasswordField } from '@/components/shared/PasswordField';
@@ -9,8 +10,8 @@ const SLIDES = [
     body: 'Sell online, accept Mobile Money, and manage orders — all from a single merchant dashboard built for local businesses.',
   },
   {
-    title: 'Mobile Money Checkout Built In',
-    body: 'Customers pay via USSD and QR codes. Track payments in real time and fulfill orders faster.',
+    title: 'A Clearer Checkout Journey',
+    body: 'Show customers their order total and payment status in one place. Mobile Money collection can be enabled once the gateway is configured.',
   },
   {
     title: 'Inventory & Analytics at a Glance',
@@ -18,24 +19,8 @@ const SLIDES = [
   },
 ];
 
-function GeepayLogo({ className = 'h-10 w-10' }) {
-  return (
-    <div
-      className={`flex items-center justify-center rounded-2xl bg-forest-dark ring-1 ring-white/10 ${className}`}
-      aria-hidden="true"
-    >
-      <svg viewBox="0 0 40 40" className="h-6 w-6" fill="none">
-        <circle cx="20" cy="20" r="14" stroke="#D1D2EF" strokeWidth="2" />
-        <path
-          d="M20 8a12 12 0 0 1 0 24"
-          fill="#00afeb"
-          stroke="#D1D2EF"
-          strokeWidth="1.5"
-        />
-        <circle cx="20" cy="20" r="4" fill="#ECECF8" />
-      </svg>
-    </div>
-  );
+function GeepayLogo({ className = '' }) {
+  return <img src="/brand/geepay-wordmark.png" alt="GeePay" width={1774} height={887} className={className} style={{width:128,height:64,objectFit:'contain',background:'#fff',borderRadius:6}} />;
 }
 
 function BrandPanel() {
@@ -88,7 +73,8 @@ export default function PortalLoginPage() {
   const { login, employeeLogin, isAuthenticated, loading, error } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname ?? '/portal';
+  const returnLocation = location.state?.from;
+  const from = returnLocation ? `${returnLocation.pathname}${returnLocation.search ?? ''}${returnLocation.hash ?? ''}` : '/portal';
 
   const [mode, setMode] = useState<'owner' | 'employee'>('owner');
   const [email, setEmail] = useState('');
@@ -123,7 +109,7 @@ export default function PortalLoginPage() {
     }
   };
 
-  const displayError = localError?.message ?? error;
+  const displayError = localError ? userMessage(localError) : error;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-cream px-4 py-8">
@@ -154,7 +140,7 @@ export default function PortalLoginPage() {
               <p className="mt-2 text-sm text-forest-muted">
                 {mode === 'employee'
                   ? 'Enter your employee ID and PIN — no business code needed.'
-                  : 'Sign in to manage your store, products, and orders.'}
+                  : 'Customers, business owners and administrators sign in here with email and password.'}
               </p>
             </div>
 
@@ -164,7 +150,7 @@ export default function PortalLoginPage() {
                 className={`flex-1 rounded-lg py-2 text-sm font-medium ${mode === 'owner' ? 'bg-forest text-white' : 'text-forest-muted'}`}
                 onClick={() => setMode('owner')}
               >
-                Owner / Admin
+                Email & password
               </button>
               <button
                 type="button"
@@ -187,7 +173,7 @@ export default function PortalLoginPage() {
                   type="email"
                   required
                   autoComplete="email"
-                  placeholder="owner@shop.com"
+                  placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-xl border border-cream-dark bg-white px-4 py-3 text-sm text-charcoal placeholder:text-gray-400 focus:border-forest/40 focus:outline-none focus:ring-2 focus:ring-forest/15"
@@ -264,10 +250,11 @@ export default function PortalLoginPage() {
               <p className="text-center text-sm text-forest-muted">
                 {mode === 'owner' ? (
                   <>
-                Need an account?{' '}
+                New business?{' '}
                 <Link to="/register/merchant" className="font-medium text-forest underline-offset-2 hover:underline">
                   Register your business
                 </Link>
+                <span className="mt-3 block">New customer? <Link to="/register/customer" className="font-medium text-forest underline underline-offset-4">Create your account</Link></span>
                   </>
                 ) : (
                   <>Sign in with your 6-digit employee ID and PIN.</>

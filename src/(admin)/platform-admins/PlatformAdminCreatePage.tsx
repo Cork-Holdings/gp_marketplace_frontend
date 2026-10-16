@@ -6,6 +6,7 @@ import { FormField, SelectField } from '@/components/onboarding/OnboardingFields
 import { PasswordField } from '@/components/shared/PasswordField';
 import { ADMIN_ROLES } from '@/components/onboarding/onboardingConfig';
 import { ErrorState } from '@/components/common/ErrorState';
+import { internationalPhone, validPhone, PHONE_ERROR } from '@/lib/phone';
 
 const STEPS = [
   { id: 'profile', label: 'Admin profile' },
@@ -33,7 +34,7 @@ export default function PlatformAdminCreatePage() {
     setSubmitting(true);
     setError(null);
     try {
-      await adminApi.createPlatformAdmin(form);
+      await adminApi.createPlatformAdmin({ ...form, phone: form.phone ? internationalPhone(form.phone) : '' });
       navigate('/portal/admin', { replace: true });
     } catch (err) {
       setError(err);
@@ -43,6 +44,7 @@ export default function PlatformAdminCreatePage() {
   };
 
   const handleContinue = () => {
+    if (form.phone && !validPhone(form.phone)) { setError(new Error(PHONE_ERROR)); return; }
     if (currentStep === 'review') {
       handleSubmit();
       return;

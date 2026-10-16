@@ -1,3 +1,4 @@
+import { RecordListTable } from '@/components/common/RecordListTable';
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/lib/context/useAuth';
@@ -170,7 +171,7 @@ function TablesManager({ store }) {
         ) : (
           <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
             <div className="overflow-hidden rounded-xl border border-cream-dark">
-              <table className="w-full text-left text-sm">
+              <RecordListTable className="w-full text-left text-sm">
                 <thead className="border-b border-cream-dark bg-cream/60 text-[11px] font-medium uppercase tracking-wide text-forest-muted">
                   <tr>
                     <th className="px-4 py-3">Table</th>
@@ -241,7 +242,7 @@ function TablesManager({ store }) {
                     );
                   })}
                 </tbody>
-              </table>
+              </RecordListTable>
             </div>
 
             <aside className="print:hidden">

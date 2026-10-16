@@ -1,0 +1,76 @@
+/* Supplied GeePay guide. Landing direction: preserve; variance 3, motion 2, density 5. */
+.reference-shell,.reference-page,.reference-marketplace,.reference-store {--ref-primary:#1C639A}
+.reference-shell :is(a,button,input,select,textarea,summary):focus-visible,.reference-marketplace :is(a,button,input,select,summary):focus-visible {outline-color:#1C639A}
+.reference-brand-lockup {display:flex!important;align-items:center!important;justify-content:center;gap:4px}
+.reference-brand-lockup img {width:126px;height:63px;object-fit:contain;flex-shrink:0}
+.reference-brand-lockup strong {font-size:13px!important;color:#10182B}
+.reference-brand small {margin-top:0!important;padding:0 0 8px}
+.is-admin .reference-sidebar .reference-brand-lockup {background:#fff;border-radius:6px;padding:0 6px}
+.is-admin .reference-sidebar .reference-brand-lockup strong {color:#10182B}
+/* Dashboard summaries carry the full brand palette; unavailable figures stay quiet. */
+.reference-shell .reference-metrics .reference-metric {
+ --metric-bg:#30C5F4; --metric-ink:#10182B; --metric-detail:#13394B;
+ --metric-icon-bg:#10182B; --metric-icon-ink:#30C5F4;
+ background:var(--metric-bg); color:var(--metric-ink);
+ border:1px solid transparent;
+}
+.reference-metrics .reference-metric.tone-mint,
+.reference-metrics .reference-metric:first-child {
+ --metric-bg:#10182B; --metric-ink:#FFFFFF; --metric-detail:#CBDEEF;
+ --metric-icon-bg:#30C5F4; --metric-icon-ink:#10182B;
+}
+.reference-metrics .reference-metric.tone-violet {
+ --metric-bg:#1C639A; --metric-ink:#FFFFFF; --metric-detail:#DAEFFF;
+ --metric-icon-bg:#30C5F4; --metric-icon-ink:#10182B;
+}
+.reference-metrics .reference-metric.tone-gold {
+ --metric-bg:#FBBF24; --metric-ink:#10182B; --metric-detail:#574217;
+ --metric-icon-bg:#10182B; --metric-icon-ink:#FBBF24;
+}
+.reference-metrics .reference-metric .reference-tile {background:var(--metric-icon-bg);color:var(--metric-icon-ink)}
+.reference-metrics .reference-metric .reference-metric-value {color:var(--metric-ink)}
+.reference-metrics .reference-metric .reference-metric-label {color:var(--metric-ink);font-weight:600}
+.reference-metrics .reference-metric .reference-metric-caption {color:var(--metric-detail)}
+.reference-metrics .reference-metric .reference-metric-delta {color:var(--metric-ink)}
+.reference-metrics .reference-metric .reference-metric-delta small {color:var(--metric-detail)}
+.reference-metrics .reference-metric.is-unavailable {
+ --metric-bg:#F0F5FA; --metric-ink:#253951; --metric-detail:#52647A;
+ --metric-icon-bg:#DCE8F3; --metric-icon-ink:#1C639A;
+ border-color:#D5E2EE;
+}
+.reference-metrics a.reference-metric:hover {box-shadow:0 3px 12px #10182B1A;outline:1px solid #1C639A;outline-offset:2px}
+.reference-metrics a.reference-metric:focus-visible {outline:3px solid #1C639A;outline-offset:3px}
+.reference-dashboard .reference-panel-head {background:#EDF6FD;border-bottom:1px solid #DAE8F3;margin-bottom:12px}
+.reference-dashboard .reference-panel-head h2 {color:#133E61}
+.reference-dashboard .reference-panel-head a {color:#1C639A;font-weight:600}
+.reference-dashboard .reference-quick-action.is-primary {background:#10182B;color:#FFFFFF}
+.reference-dashboard .reference-quick-action.is-primary>.reference-icon {color:#30C5F4}
+.reference-dashboard .reference-quick-action.is-primary:hover {background:#1C639A}
+.reference-shell .tone-violet,.reference-marketplace .tone-violet,.reference-shell .tone-pink,.reference-marketplace .tone-pink {background:#EDF1F6;color:#257DC1}
+.reference-shell .tone-blue,.reference-marketplace .tone-blue,.reference-shell .tone-sky,.reference-marketplace .tone-sky {background:#EAF5FB;color:#1C639A}
+.reference-shell .tone-peach,.reference-marketplace .tone-peach,.reference-shell .tone-gold,.reference-marketplace .tone-gold {background:#FFFAEB;color:#856000}
+.reference-shell .tone-rose,.reference-marketplace .tone-rose {background:#EDF1F6;color:#10182B}
+.reference-shell .tone-mint,.reference-marketplace .tone-mint {background:#EAF5FB;color:#1C639A}
+.reference-market-hero {background:#10182B!important}
+.reference-market-hero-copy h1 span {color:#30C5F4!important}
+.reference-market-section-head {margin-top:28px;margin-bottom:16px}
+.reference-deals-grid {gap:24px!important;margin:0 0 32px}
+.reference-deal {border:1px solid #DDE8F1;min-height:148px!important;padding:24px!important;background:#EAF5FB!important;color:#10182B!important;border-radius:12px}
+.reference-deal:nth-child(2) {background:#FFFAEB!important}
+.reference-deal:nth-child(3) {background:#EEF1F6!important}
+.reference-deal p {line-height:1.5!important;margin-top:8px!important;font-size:13px!important}
+.reference-deal-photo {width:96px;height:96px;object-fit:cover;border-radius:8px;flex-shrink:0}
+.reference-deal span {display:block;margin-top:12px;font-size:13px;font-weight:600;color:#1C639A}
+.reference-plan-grid {grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))}
+.reference-plan-card.tier-2 {background:#F3F7FB;border-color:#C9D9E7}
+.reference-plan-card header p {font-size:12px}
+.reference-plan-card li {font-size:12px}
+@media(max-width:760px) {
+ .reference-brand-lockup img {width:100px;height:50px}
+ .reference-brand-lockup strong {font-size:11px!important}
+ .reference-deals-grid {display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:16px!important;padding:2px 2px 14px}
+ .reference-deal {flex:0 0 83%;min-width:0;scroll-snap-align:start;min-height:148px!important;padding:20px!important}
+ .reference-deal h3 {font-size:18px!important;line-height:1.25!important}
+ .reference-deal p {font-size:13px!important}
+}
+@media(prefers-reduced-motion:reduce) {.reference-shell *,.reference-marketplace * {scroll-behavior:auto!important}}

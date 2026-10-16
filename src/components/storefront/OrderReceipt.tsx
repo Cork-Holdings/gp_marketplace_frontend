@@ -31,7 +31,7 @@ function fulfillmentLabel(order) {
 export function OrderReceipt({
   order,
   currency = DEFAULT_CURRENCY,
-  brandColor = '#383d92',
+  brandColor = '#257DC1',
   dineInMode = false,
   storeName,
   showPrintButton = true,

@@ -24,6 +24,7 @@ export function MenuCategoryBrowser({
   searchQuery = '',
   highlightCategoryId,
   stickyCategories = false,
+  store,
 }) {
   const { data: categoryData, loading: categoriesLoading } = useAsync(
     () => (storeId ? storefrontApi.listMenuCategories(storeId) : Promise.resolve([])),
@@ -109,7 +110,7 @@ export function MenuCategoryBrowser({
           <h3 className="mb-4 font-serif text-2xl text-charcoal">{section.name}</h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
             {section.products.map((product, index) => (
-              <ProductCard key={product.id} product={product} currency={currency} onAdd={onAdd} index={index} />
+              <ProductCard key={product.id} product={product} currency={currency} onAdd={onAdd} store={store} index={index} />
             ))}
           </div>
         </div>
