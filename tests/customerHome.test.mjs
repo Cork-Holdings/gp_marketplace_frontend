@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import { customerNavigation, customerSectionTitle, isCustomerSectionActive } from '../src/lib/customerNavigation.ts';
 import { customerHomeRows, customerReviews } from '../src/lib/customerHome.ts';
 
-test('customer groups retain all six existing routes and add only Home', () => {
+test('customer groups retain the existing routes and add issued invoices to payments', () => {
   assert.deepEqual(customerNavigation.map(group => group.label), [null,'Shopping & requests','Bookings & services','Payments & receipts']);
   const routes = customerNavigation.flatMap(group => group.items.map(item => item.to));
-  assert.equal(routes.length,7);
-  assert.equal(new Set(routes).size,7);
+  assert.equal(routes.length,8);
+  assert.equal(new Set(routes).size,8);
+  assert.ok(routes.includes('/account/invoices'));
   assert.equal(routes[0],'/account');
 });
 

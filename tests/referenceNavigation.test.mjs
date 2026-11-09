@@ -17,9 +17,10 @@ test('future feature routes remain role scoped and marked unavailable',()=>{
   for(const [role,items] of [['owner',ownerReferenceMenu],['admin',adminReferenceMenu]])for(const item of items.filter(item=>item.comingSoon))assert.ok(item.to.startsWith(featurePath(role,''))||item.to==='/portal/owner/plans');
   assert.equal(featurePath('customer','notifications'),'/account/coming-soon/notifications');
 });
-test('grouping retains insertion order, route objects and food-only restrictions',()=>{
+test('module grouping retains route objects and food-only restrictions',()=>{
   const grouped=groupReferenceMenu(ownerReferenceMenu);
-  assert.deepEqual(grouped.flatMap(group=>group.items),ownerReferenceMenu);
+  assert.deepEqual(new Set(grouped.flatMap(group=>group.items)),new Set(ownerReferenceMenu));
+  assert.equal(grouped.find(group=>group.label==='People & HR').to,'/portal/owner/modules/people');
   assert.deepEqual(ownerReferenceMenu.filter(item=>item.foodOnly).map(item=>item.label),['Kitchen','Menu','Tables']);
   assert.deepEqual(groupReferenceMenu([]),[]);
 });

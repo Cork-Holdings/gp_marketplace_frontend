@@ -1,7 +1,9 @@
-import { Link,useParams } from 'react-router-dom';
+import { Link,Navigate,useParams } from 'react-router-dom';
 import { adminReferenceMenu,ownerReferenceMenu,featurePath,type ReferenceRole } from '@/lib/referenceNavigation';
 import { ReferenceIcon } from './ReferenceIcon';
 import { Soon } from './ReferenceUI';
+import { modulePath, plannedFeature } from '@/lib/erpModules';
+import './module-overview.css';
 
 const explanations:Record<string,string>={
   crm:'Customer profiles, segmentation, purchase history and follow-ups will be available here.',
@@ -26,6 +28,9 @@ const explanations:Record<string,string>={
 export function ComingSoonPage({role='customer',featureOverride}:{role?:ReferenceRole;featureOverride?:string}) {
   const {feature:routeFeature}=useParams();
   const feature=featureOverride??routeFeature??'';
+  if(role==='admin'&&['customers','products','categories'].includes(feature)) return <Navigate to={`/portal/admin/${feature}`} replace/>;
+  const planned = role === 'customer' ? undefined : plannedFeature(role, feature);
+  if(planned&&role!=='customer') return <Navigate to={planned.module[role]!.paths.length?modulePath(role,planned.module.id):modulePath(role)} replace/>;
   const menus=[...adminReferenceMenu,...ownerReferenceMenu];
   const entry=menus.find(item=>item.to===featurePath(role,feature));
   const fallback:Record<string,string>={notifications:'Notifications',support:'Help & support',settings:'Settings',favourites:'Saved items',deals:'Deals & offers',discounts:'Discounted products',arrivals:'New arrivals',clearance:'Clearance sale',scan:'Scan',education:'Education',health:'Health',events:'Events',professional:'Professional services'};

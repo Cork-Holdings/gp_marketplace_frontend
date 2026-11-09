@@ -1,0 +1,585 @@
+.settlement-page {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.settlement-notification-bell {
+  min-width: 44px;
+  min-height: 44px;
+}
+.settlement-notification-bell .reference-count {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.settlement-alert-summary {
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.settlement-alert-summary p {
+  margin: 8px 0;
+}
+.settlement-alert-summary a {
+  color: var(--ref-primary);
+  font-weight: 600;
+  display: inline-block;
+  padding: 8px 0;
+}
+.settlement-alert-summary.needs-review,
+.settlement-history-warning {
+  background: #fff8e7;
+  color: #725016;
+}
+.settlement-notification-list {
+  background: var(--ref-surface);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.settlement-notification-list article {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid var(--ref-border);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.settlement-notification-list article > div {
+  min-width: 0;
+}
+.settlement-notification-list article.is-unread {
+  background: #eef7fd;
+}
+.settlement-notification-list h2 {
+  font-size: 16px;
+  font-weight: 650;
+  margin-bottom: 8px;
+}
+.settlement-notification-list p {
+  margin: 6px 0;
+}
+.settlement-notification-list .reference-button {
+  flex-shrink: 0;
+  min-height: 44px;
+}
+.settlement-unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: #257dc1;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.settlement-review-queue {
+  display: grid;
+  gap: 20px;
+  scroll-margin-top: 20px;
+}
+.settlement-recovery {
+  padding: 20px;
+  background: var(--ref-surface);
+  border-radius: 10px;
+  min-width: 0;
+}
+.settlement-recovery > h2 {
+  font-size: 20px;
+  font-weight: 650;
+}
+.settlement-recovery > p {
+  margin: 10px 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.settlement-full-history {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  width: 100%;
+  container-type: inline-size;
+}
+.settlement-form:has(> .settlement-full-history) {
+  max-width: none;
+}
+.settlement-history-heading {
+  padding-bottom: 16px;
+}
+.settlement-history-heading p,
+.settlement-history-caption,
+.settlement-history-empty {
+  color: var(--ref-muted);
+  font-size: 13px;
+}
+.settlement-history-heading .reference-link-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.settlement-history-overview {
+  background: var(--ref-canvas);
+  padding: 18px;
+  border-radius: 8px;
+}
+.settlement-history-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+  flex-wrap: wrap;
+}
+.settlement-history-title strong {
+  font-size: 18px;
+  font-weight: 650;
+}
+.settlement-history-title p {
+  color: var(--ref-muted);
+  margin-top: 2px;
+}
+.settlement-history-description {
+  margin: 14px 0;
+  max-width: 72ch;
+  white-space: pre-wrap;
+}
+.settlement-history-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 24px;
+  margin: 18px 0 0;
+}
+.settlement-history-facts dt {
+  color: var(--ref-muted);
+  font-size: 12px;
+}
+.settlement-history-facts dd {
+  margin: 3px 0 0;
+  font-weight: 500;
+}
+.settlement-history-section {
+  min-width: 0;
+  padding: 8px 0 16px;
+}
+.settlement-full-history .settlement-history-section h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 12px;
+}
+.settlement-history-section h4 > .reference-icon {
+  color: var(--ref-primary);
+  flex-shrink: 0;
+}
+.settlement-history-section h4 > span {
+  color: var(--ref-muted);
+  font-size: 12px;
+  font-weight: 500;
+  margin-left: auto;
+}
+.settlement-charge-wrap {
+  overflow-x: auto;
+}
+.settlement-charge-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.settlement-charge-table :is(th, td) {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--ref-border);
+  text-align: left;
+  vertical-align: top;
+}
+.settlement-charge-table th {
+  color: var(--ref-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.settlement-charge-table :is(th, td):last-child {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.settlement-charge-table td:nth-child(2) {
+  white-space: nowrap;
+  color: var(--ref-muted);
+}
+.settlement-charge-table td:first-child {
+  width: 58%;
+  overflow-wrap: anywhere;
+}
+.settlement-charge-table small {
+  display: block;
+  color: var(--ref-muted);
+}
+.settlement-charge-table tfoot :is(th, td) {
+  font-weight: 650;
+  color: var(--ref-ink);
+  border-bottom: 0;
+}
+.settlement-payment-top,
+.settlement-payment-top > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.settlement-payment-top {
+  justify-content: space-between;
+}
+.settlement-payment-top > strong {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+.settlement-payment-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px 16px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+  font-size: 12px;
+  color: var(--ref-muted);
+}
+.settlement-reference-detail summary {
+  cursor: pointer;
+  color: var(--ref-primary);
+  padding: 5px 0;
+  font-size: 12px;
+}
+.settlement-reference-detail code {
+  display: block;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  padding: 8px 0;
+}
+.settlement-history-caption {
+  margin-top: 8px;
+}
+.settlement-history-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 32px;
+  border-top: 1px solid var(--ref-border);
+}
+.settlement-full-history .settlement-activity-timeline li {
+  border: 0;
+  padding: 0;
+}
+.settlement-activity-date {
+  color: var(--ref-muted);
+  font-size: 12px;
+  font-weight: 600;
+  margin: 12px 0;
+}
+.settlement-activity-entry {
+  display: grid;
+  grid-template-columns: 70px 12px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0 14px;
+  position: relative;
+}
+.settlement-activity-entry > time {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+}
+.settlement-activity-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--ref-primary);
+  border-radius: 50%;
+  margin-top: 7px;
+}
+.settlement-activity-entry > div {
+  min-width: 0;
+}
+.settlement-activity-entry strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.settlement-activity-entry p,
+.settlement-activity-entry small {
+  font-size: 12px;
+  color: var(--ref-muted);
+}
+.settlement-activity-entry .settlement-activity-note {
+  color: var(--ref-ink);
+  margin: 5px 0;
+  white-space: pre-wrap;
+}
+.settlement-evidence-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.settlement-evidence-rows li > p {
+  margin: 8px 0;
+  white-space: pre-wrap;
+}
+.settlement-evidence-rows small {
+  color: var(--ref-muted);
+  font-size: 12px;
+}
+.settlement-issue-entry {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ref-border);
+}
+.settlement-issue-entry :is(p, dd) {
+  white-space: pre-wrap;
+}
+.settlement-issue-entry dt {
+  color: var(--ref-muted);
+  font-size: 12px;
+}
+.settlement-issue-entry dl {
+  margin: 10px 0;
+}
+.settlement-history-audit {
+  display: flex;
+  gap: 8px;
+  align-items: start;
+  font-size: 12px;
+  color: var(--ref-muted);
+  padding: 12px 0;
+  border-top: 1px solid var(--ref-border);
+}
+.settlement-history-audit > svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.settlement-history-ack {
+  padding: 14px;
+  background: var(--ref-canvas);
+  border-radius: 6px;
+}
+@container (max-width: 680px) {
+  .settlement-history-columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .settlement-history-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (max-width: 380px) {
+  .settlement-history-facts {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .settlement-history-overview {
+    padding: 12px;
+  }
+  .settlement-charge-table :is(th, td) {
+    padding: 8px 4px;
+    font-size: 12px;
+  }
+  .settlement-charge-table td:nth-child(2) {
+    white-space: normal;
+  }
+  .settlement-activity-entry {
+    grid-template-columns: 62px 8px minmax(0, 1fr);
+    gap: 7px;
+  }
+}
+.settlement-full-history header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.settlement-full-history h3 {
+  font-size: 18px;
+  font-weight: 650;
+}
+.settlement-full-history h4 {
+  font-size: 16px;
+  font-weight: 650;
+  margin: 20px 0 8px;
+}
+.settlement-full-history ul,
+.settlement-full-history ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.settlement-full-history li {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--ref-border);
+  overflow-wrap: anywhere;
+}
+.settlement-full-history :is(p, dd) {
+  overflow-wrap: anywhere;
+}
+.settlement-full-history time {
+  color: var(--ref-muted);
+  font-size: 13px;
+}
+.settlement-history-warning {
+  padding: 12px;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+.settlement-full-history .settlement-check {
+  margin-top: 16px;
+}
+@media (max-width: 600px) {
+  .settlement-notification-list article {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 16px;
+  }
+  .settlement-notification-list .reference-button {
+    text-align: center;
+  }
+  .settlement-recovery {
+    padding: 12px;
+  }
+  .settlement-full-history .reference-detail-facts {
+    margin: 12px 0;
+    grid-template-columns: 1fr;
+  }
+}
+.settlement-page .reference-table {
+  font-size: 13px;
+}
+.settlement-page .reference-table td,
+.settlement-page .reference-table th {
+  padding: 12px 10px;
+}
+.settlement-page .reference-detail-facts {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.settlement-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px;
+}
+.settlement-page .reference-notice {
+  border: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.settlement-page .reference-button {
+  font-size: 14px;
+  min-height: 44px;
+}
+.settlement-page .reference-link-button {
+  font-size: 13px;
+  min-height: 40px;
+}
+.settlement-page .reference-detail-facts dt {
+  font-size: 13px;
+}
+.settlement-page .reference-detail-facts dd {
+  font-size: 14px;
+  margin-top: 6px;
+}
+.settlement-page .reference-table caption {
+  font-size: 12px;
+}
+.settlement-setup {
+  padding: 18px;
+  background: var(--ref-surface);
+  border: 1px solid var(--ref-border);
+  border-radius: 10px;
+}
+.settlement-setup > summary {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 650;
+  padding: 4px 0;
+}
+.settlement-setup > p,
+.settlement-form > p {
+  font-size: 14px;
+  line-height: 1.6;
+  max-width: 70ch;
+  margin: 10px 0;
+}
+.settlement-form {
+  display: grid;
+  gap: 10px;
+  max-width: 760px;
+  padding: 18px;
+  margin-block: 12px;
+  background: var(--ref-canvas);
+}
+.settlement-form label {
+  font-size: 14px;
+  font-weight: 600;
+}
+.settlement-form :is(input:not([type="checkbox"]), select, textarea) {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--ref-border);
+  border-radius: 6px;
+  padding: 10px;
+  background: var(--ref-surface);
+  font-size: 16px;
+  color: var(--ref-ink);
+}
+.settlement-form textarea {
+  min-height: 90px;
+}
+.settlement-form .reference-button {
+  justify-self: start;
+}
+.settlement-form .settlement-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-weight: 400;
+  line-height: 1.6;
+}
+.settlement-check input {
+  flex-shrink: 0;
+  margin-top: 6px;
+  width: 18px;
+  height: 18px;
+}
+.settlement-history {
+  list-style: none;
+  padding: 0 18px 18px;
+}
+.settlement-history li {
+  padding: 14px 0;
+  border-top: 1px solid var(--ref-border);
+  font-size: 14px;
+}
+.settlement-history p {
+  margin: 6px 0;
+  max-width: 70ch;
+  line-height: 1.5;
+}
+.settlement-history time {
+  font-size: 12px;
+  color: var(--ref-muted);
+}
+.settlement-subhead {
+  font-size: 16px;
+  font-weight: 650;
+  margin: 18px;
+}
+.settlement-page button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+@media (max-width: 600px) {
+  .settlement-form {
+    padding: 12px;
+  }
+  .settlement-setup {
+    padding: 12px;
+  }
+  .settlement-actions .reference-button {
+    width: 100%;
+    text-align: left;
+  }
+  .settlement-page .reference-detail-facts {
+    grid-template-columns: 1fr;
+  }
+}

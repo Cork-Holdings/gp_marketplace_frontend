@@ -1,3 +1,4 @@
+import { PaginatedTable } from '@/components/common/PaginatedTable';
 import { useState, useEffect, useRef } from 'react';
 import { PHYSICAL_GOODS_KANBAN_LANES } from '@/lib/workflows';
 import { ownerApi } from '@/lib/api/services';
@@ -103,7 +104,7 @@ export function ProductTable({ storeId, listOnly = false, onRequestCreate }) {
       ) : (
         <div className="dashboard-card overflow-hidden p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-left text-sm">
+            <PaginatedTable className="w-full min-w-[520px] text-left text-sm">
               <thead className="border-b border-cream-dark bg-cream/60 text-[11px] font-medium uppercase tracking-wide text-forest-muted">
                 <tr>
                   <th className="px-4 py-3">Name</th>
@@ -132,7 +133,7 @@ export function ProductTable({ storeId, listOnly = false, onRequestCreate }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </PaginatedTable>
           </div>
         </div>
       )}

@@ -14,6 +14,7 @@ import { ServiceJobProgress } from '@/components/jobs/ServiceJobProgress';
 import { WorkflowIcon } from '@/components/common/WorkflowIcon';
 import { WorkflowPageHeader, WorkflowEmpty } from '@/components/common/WorkflowVisuals';
 import type { ServiceJob, ServiceJobEvidence } from '@/types/serviceQuote';
+import { PaymentReceipts } from '@/components/payments/PaymentReceipts';
 
 export default function CustomerServiceJobsPage() {
   const { hasRole, isAuthenticated } = useAuth();
@@ -58,6 +59,7 @@ export default function CustomerServiceJobsPage() {
         {active.status === 'provider_completed' && <div><p>The provider has finished. Please review the work and record above.</p><div className="workflow-actions job-review-actions"><button type="button" className="workflow-primary" disabled={working} onClick={() => setConfirmComplete(true)}>Confirm completed</button><button type="button" className="workflow-text-action" aria-expanded={disputeOpen} onClick={() => setDisputeOpen(!disputeOpen)}>Report a problem</button></div>{disputeOpen && <form className="workflow-form workflow-embedded-form" onSubmit={event => { event.preventDefault(); void decide('disputed'); }}><label>What needs fixing?<textarea required maxLength={2000} rows={4} value={reason} onChange={event => setReason(event.target.value)} placeholder="Describe what is incomplete or incorrect so the business can respond" /></label><button className="workflow-primary" type="submit" aria-busy={working}>Send issue</button></form>}</div>}
         {active.status === 'disputed' && <p>Issue reported: {active.dispute_reason || 'The business will follow up.'}</p>}
         {active.status === 'customer_confirmed' && <p>You confirmed this work is complete.</p>}
+        {active.quote_id&&<PaymentReceipts key={active.quote_id} kind="quote" sourceId={active.quote_id} compact/>}
       </div></WorkflowDetailBody>}<WorkflowDetailFooter><button type="button" className="booking-back-button" onClick={() => setSelectedId('')}>Close</button></WorkflowDetailFooter></WorkflowDetailContent></WorkflowDetailPage>
     <ConfirmDialog open={confirmComplete} title="Confirm this work is complete?" description={active ? `You are confirming that ${active.title} was completed. Review the work record before proceeding.` : undefined} confirmLabel="Confirm completed" cancelLabel="Keep reviewing" tone="primary" busy={working} onCancel={() => setConfirmComplete(false)} onConfirm={() => { void decide('customer_confirmed'); }} />
   </main>;

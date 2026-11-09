@@ -4,9 +4,10 @@ import { ReferenceIcon } from './ReferenceIcon';
 import { featurePath, type ReferenceRole } from '@/lib/referenceNavigation';
 import './reference.css';
 import './brand-refinements.css';
+import { GeePayLogo } from '@/components/shared/GeePayLogo';
 
-export function MarketplaceBrand({ compact = false }: { compact?: boolean }) {
-  return <span className={`reference-brand${compact ? ' is-compact' : ''}`}><span className="reference-brand-lockup"><img src="/brand/geepay-wordmark.png" width={1774} height={887} alt="GeePay"/><strong>Marketplace</strong></span><small>Powered by Clickmore</small></span>;
+export function MarketplaceBrand({ compact = false, dark = false }: { compact?: boolean; dark?: boolean }) {
+  return <span className={`reference-brand${compact ? ' is-compact' : ''}`}><span className="reference-brand-lockup"><GeePayLogo surface={dark ? 'dark' : 'light'}/><strong>Marketplace</strong></span><small>Powered by Clickmore</small></span>;
 }
 
 export function Soon({ children = 'Coming soon' }: { children?: ReactNode }) {
@@ -45,7 +46,8 @@ export function Photo({ src, alt = '', className = '', eager = false }: { src?: 
 
 export function QuickAction({ label, icon, to, primary = false, soon = false }: { label: string; icon: string; to?: string; primary?: boolean; soon?: boolean }) {
   const content = <><ReferenceIcon name={icon}/><span>{label}</span>{soon&&<Soon/>}</>;
-  return to ? <Link className={`reference-quick-action${primary ? ' is-primary' : ''}`} to={to}>{content}</Link> : <button type="button" className={`reference-quick-action${primary ? ' is-primary' : ''}`} disabled={soon}>{content}</button>;
+  const className = `reference-quick-action${primary ? ' is-primary' : ''}${primary && !soon ? ' gp-brand-cta' : ''}`;
+  return to ? <Link className={className} to={to}>{content}</Link> : <button type="button" className={className} disabled={soon}>{content}</button>;
 }
 
 export function FutureTool({ role, label, feature, icon, tone = 'blue' }: { role: ReferenceRole; label: string; feature: string; icon: string; tone?: string }) {

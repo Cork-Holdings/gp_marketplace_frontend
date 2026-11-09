@@ -3,6 +3,7 @@ import { userMessage } from '@/lib/userMessage';
 import { Navigate, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/context/useAuth';
 import { PasswordField } from '@/components/shared/PasswordField';
+import { GeePayLogo } from '@/components/shared/GeePayLogo';
 
 const SLIDES = [
   {
@@ -18,10 +19,6 @@ const SLIDES = [
     body: 'Update products, monitor sales revenue, and stay on top of every order from anywhere.',
   },
 ];
-
-function GeepayLogo({ className = '' }) {
-  return <img src="/brand/geepay-wordmark.png" alt="GeePay" width={1774} height={887} className={className} style={{width:128,height:64,objectFit:'contain',background:'#fff',borderRadius:6}} />;
-}
 
 function BrandPanel() {
   const [active, setActive] = useState(0);
@@ -40,7 +37,7 @@ function BrandPanel() {
       <div className="auth-brand-glow pointer-events-none absolute inset-0" aria-hidden="true" />
 
       <div className="relative z-10">
-        <GeepayLogo className="h-14 w-14" />
+        <GeePayLogo surface="dark" />
       </div>
 
       <div className="relative z-10 space-y-4">
@@ -120,7 +117,7 @@ export default function PortalLoginPage() {
           {/* Header */}
           <div className="mb-8 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2">
-              <GeepayLogo className="h-9 w-9 lg:hidden" />
+              <GeePayLogo className="lg:hidden" />
               <span className="font-serif text-lg font-semibold text-forest lg:hidden">Geepay</span>
             </Link>
             <p className="text-sm text-forest-muted">
@@ -237,7 +234,7 @@ export default function PortalLoginPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="auth-sign-in-btn flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-60"
+                className="auth-sign-in-btn gp-brand-cta flex w-full items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-semibold text-white transition active:scale-[0.98] disabled:opacity-60"
               >
                 {submitting ? 'Signing in…' : 'Sign In'}
                 {!submitting && (

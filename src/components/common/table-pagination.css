@@ -1,0 +1,73 @@
+.table-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #e0e7ef;
+  background: #fff;
+  color: #53667e;
+  font-size: 12px;
+  position: static;
+}
+.table-pagination p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.table-pagination > div {
+  display: flex;
+  gap: 8px;
+}
+.table-pagination button {
+  min-height: 44px;
+  min-width: 80px;
+  padding: 8px 12px;
+  border: 1px solid #c9d4e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #195e96;
+  font-size: 13px;
+  font-weight: 600;
+}
+.table-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.table-pagination button:focus-visible {
+  outline: 2px solid #257dc1;
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  .table-pagination {
+    padding: 16px;
+  }
+  .table-pagination > div {
+    margin-left: auto;
+  }
+}
+@media print {
+  .table-pagination {
+    display: none !important;
+  }
+}
+
+.paginated-table {
+  width: 100%;
+  min-width: 0;
+}
+.paginated-table-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.paginated-table-scroll::-webkit-scrollbar {
+  display: none;
+}
+@media print {
+  .paginated-table-scroll {
+    overflow: visible !important;
+    max-width: none !important;
+  }
+}

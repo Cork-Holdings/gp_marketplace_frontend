@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/context/useAuth';
 import { useMarketplace } from '@/lib/context/useMarketplace';
 import { useOwnerDashboard } from '@/hooks/useOwnerDashboard';
@@ -7,13 +6,15 @@ import { recordedCurrency, recordedNumber } from '@/lib/recordedData';
 import { orderSummary } from '@/lib/orderSummary';
 import { ErrorState } from '@/components/common/ErrorState';
 import type { DashboardPeriod } from '@/types/ownerDashboard';
-import { Metric, PendingPanel, QuickAction, ReferencePanel, FutureTool } from './ReferenceUI';
+import { Metric, QuickAction, ReferencePanel } from './ReferenceUI';
+import { BusinessModuleDirectory } from './ModuleOverviewPage';
 import { TrendChart } from './ReferenceCharts';
 import { StockRows, ActivityRows, OrderSummaryRows } from './DashboardWidgets';
 import { ReferenceIcon } from './ReferenceIcon';
 import { OwnerService } from '@/lib/api/services/owner';
 import { usePermissions } from '@/lib/context/permissions';
 import { PERM } from '@/lib/permissions';
+import { ERPActivitySummary } from '@/components/erp/ERPActivitySummary';
 import type { Product } from '@/types/product';
 const taskRoutes = { order: 'orders', reservation: 'bookings', quote: 'quotes', custom_order: 'custom-orders', job: 'jobs' };
 export default function OwnerReferenceDashboard() {
@@ -50,24 +51,19 @@ export default function OwnerReferenceDashboard() {
       <div className="reference-metrics">
         <Metric title={'Confirmed collections'} value={data?.money_visible && money ? recordedCurrency(money.collected, money.currency) : selectedStore && result.loading ? 'Loading…' : '—'} caption={'Net of refunds · not a payout balance'} icon="chart" tone="mint"/>
         <Metric title="Total Orders" icon="bag" tone="blue" to="/portal/owner/orders" value={!canReadOrders?'Restricted':orders?.total ?? (storeId && result.loading?'Loading…':'Unavailable')} caption="All time · selected branch"/>
-        <Metric title="Total Customers" icon="users" tone="violet" soon/>
-        <Metric title="Average Rating" icon="star" tone="gold" soon/>
-        <Metric title="Net Profit (Est.)" icon="coins" tone="rose" soon/>
       </div>
       <div className="reference-owner-sales"><ReferencePanel title={'Collection Overview'} action={data?.money.length > 1 ? <label>Currency <select aria-label="Collection currency" value={money?.currency} onChange={event => setCurrency(event.target.value)}>{data.money.map(item => <option key={item.currency}>{item.currency}</option>)}</select></label> : <span className="reference-small">{period === 'all' ? 'Most recent 30 days' : period === 'today' ? 'Today' : period === '7d' ? 'Last 7 days' : 'Last 30 days'}</span>}>
         {data?.money_visible && validTrend ? <TrendChart money={money.currency === 'ZMW'} points={trend} valueLabel={`Net collections (${money.currency})`}/> : <div className="reference-pending"><ReferenceIcon name="chart" size={30}/><p>{selectedStore && result.loading ? 'Loading collections…' : 'No collection trend available'}</p><small>{data && !data.money_visible ? 'Your role does not include payment summaries.' : 'Confirmed collections appear here. Sales and profit reporting are coming soon.'}</small></div>}
       </ReferencePanel><ReferencePanel title="Orders" to="/portal/owner/orders"><OrderSummaryRows counts={data?.order_counts} loading={result.loading} restricted={!canReadOrders}/></ReferencePanel></div>
-      <div className="reference-owner-tables"><ReferencePanel title="Top Products" to="/portal/owner/products" soon>{<PendingPanel icon="package" text="Product sales rankings and revenue attribution."/>}</ReferencePanel><ReferencePanel title="Top Services / Bookings" to="/portal/owner/bookings" soon>{<PendingPanel icon="calendar" text="Booking and service revenue rankings."/>}</ReferencePanel><ReferencePanel title="Customer Insights" soon>{<PendingPanel icon="users" text="Unique customers, repeat purchases and retention."/>}</ReferencePanel></div>
-      <div className="reference-owner-bottom"><ReferencePanel title="Marketing Performance" soon><PendingPanel icon="megaphone" text="Campaign views, clicks and attribution are coming soon."/></ReferencePanel><ReferencePanel title="Business Health Score" soon>{<PendingPanel text="A documented, explainable business-health score."/>}</ReferencePanel></div>
+      <BusinessModuleDirectory role="owner"/>
+      <ERPActivitySummary/>
       {data && <ReferencePanel title="Needs attention" action={<button className="reference-link-button" onClick={result.refresh} disabled={result.loading}>Refresh</button>}>
         {data.simulated && <p className="reference-notice">Simulation mode · test collections are not real money.</p>}
         {data.money_visible && <div className="reference-payment-facts">{data.money.map(item => <div key={item.currency}><strong>{recordedCurrency(item.outstanding, item.currency)}</strong><span>Outstanding agreed value · {item.pending_count} collections in progress</span></div>)}</div>}
         {!data.work_visible ? <p className="reference-note">Your role does not include work summaries.</p> : <><ActivityRows rows={data.tasks.map(task => ({ title: task.title, detail: task.reason, age: task.audience === 'customer' ? 'Customer action' : 'Your action', icon: task.kind === 'reservation' ? 'calendar' : 'document', tone: task.priority === 0 ? 'rose' : 'blue', to: `/portal/owner/${taskRoutes[task.kind]}${task.kind === 'order' ? '' : `?detail=${encodeURIComponent(task.id)}`}` }))}/>{!data.tasks.length && <p className="reference-note">No work waiting on this page. Open a work section to see ongoing items.</p>}{data.task_count > data.limit && <div className="reference-pagination"><button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - data.limit))}>Previous</button><span>{offset + 1}–{Math.min(offset + data.tasks.length, data.task_count)} of {data.task_count}</span><button disabled={offset + data.limit >= data.task_count} onClick={() => setOffset(offset + data.limit)}>Next</button></div>}</>}
       </ReferencePanel>}
-    </div><aside className="reference-owner-rail" aria-label="Business actions and alerts"><div className="reference-quick-actions"><QuickAction icon="plus" label="Add Product / Service" to="/portal/owner/products" primary/><QuickAction icon="megaphone" label="Create Promotion" to="/portal/owner/coming-soon/marketing" soon/><QuickAction icon="document" label="Create Quotation" to="/portal/owner/quotes"/><QuickAction icon="monitor" label="View Store" to={selectedStore ? `/store/${encodeURIComponent(selectedStore.slug)}` : '/portal/owner/stores'}/></div>
+    </div><aside className="reference-owner-rail" aria-label="Business actions and alerts"><div className="reference-quick-actions"><QuickAction icon="plus" label="Add Product / Service" to="/portal/owner/products" primary/><QuickAction icon="document" label="Create Quotation" to="/portal/owner/quotes"/><QuickAction icon="monitor" label="View Store" to={selectedStore ? `/store/${encodeURIComponent(selectedStore.slug)}` : '/portal/owner/stores'}/></div>
       <ReferencePanel title="Inventory Alerts" to="/portal/owner/inventory">{canReadStock && stock.key === storeId && stock.rows ? <StockRows products={stock.rows}/> : <p className="reference-note">{stock.key === storeId && stock.error ? 'Stock could not be loaded. Open Inventory to retry.' : canReadStock && storeId ? 'Loading stock…' : 'Open Inventory to review available stock and variants.'}</p>}</ReferencePanel>
-      <ReferencePanel title="Recent Reviews" soon><PendingPanel icon="star" text="Verified customer ratings and review management."/></ReferencePanel>
-      <ReferencePanel title="Business Tools" action={<Link to="/portal/owner/coming-soon/business-services">Explore</Link>}><div className="reference-tools"><FutureTool role="owner" label="Website Builder" feature="website" icon="monitor"/><FutureTool role="owner" label="Marketing Centre" feature="marketing" icon="megaphone" tone="rose"/><FutureTool role="owner" label="Accounting" feature="accounting" icon="document" tone="mint"/><FutureTool role="owner" label="HR Management" feature="hr" icon="users" tone="violet"/></div></ReferencePanel>
     </aside></div>
   </div>;
 }

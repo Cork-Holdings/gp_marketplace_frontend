@@ -4,9 +4,11 @@ import { AdminService } from '@/lib/api/services/admin';
 import api from '@/lib/api/crud';
 import { recordedCount, recordedCurrency, recordedNumber } from '@/lib/recordedData';
 import { ErrorState } from '@/components/common/ErrorState';
-import { Metric, PendingPanel, QuickAction, ReferencePanel } from './ReferenceUI';
+import { Metric, QuickAction, ReferencePanel } from './ReferenceUI';
+import { BusinessModuleDirectory } from './ModuleOverviewPage';
 import { OrderSummaryRows } from './DashboardWidgets';
 import { TrendChart } from './ReferenceCharts';
+import { SettlementAlertSummary } from '@/components/payments/SettlementAlerts';
 
 type Point = {date: string; value: string | number};
 type PlatformData = {
@@ -49,25 +51,23 @@ export default function AdminReferenceDashboard() {
       <Metric title="Confirmed collections" icon="cart" tone="mint" value={count(data?.collection_count)} caption="Successful provider payments"/>
       <Metric title="Collected value" icon="coins" tone="blue" value={money?recordedCurrency(money.collected,money.currency):state.loading?'Loading…':'No confirmed collections'} caption="Before partial refunds · not payout float"/>
       <Metric title="Total Merchants" icon="monitor" tone="violet" value={count(data?.merchants)} to="/portal/admin/merchants" caption="Registered businesses · all time"/>
-      <Metric title="Total Customers" icon="users" tone="gold" value={count(data?.customers)} caption="Registered customer accounts"/>
-      <Metric title="Marketplace Revenue" icon="chart" tone="rose" soon/>
+      <Metric title="Total Customers" icon="users" tone="gold" value={count(data?.customers)} to="/portal/admin/customers" caption="Registered customer accounts"/>
       <Metric title="Average Collection" icon="wallet" tone="mint" value={money?recordedCurrency(money.average,money.currency):state.loading?'Loading…':'No confirmed collections'} caption={money?.currency ?? 'No currencies combined'}/>
     </div>
-    <div className="reference-admin-row row-one">
+    <div className="reference-admin-row module-admin-row">
       <ReferencePanel title="Collection Value" action={data?.money.length?<label className="reference-small">Currency <select aria-label="Platform collection currency" value={money?.currency} onChange={event=>setCurrency(event.target.value)}>{data.money.map(item=><option key={item.currency}>{item.currency}</option>)}</select></label>:undefined}>{chart(trend,`Collections (${money?.currency ?? ''})`,money?.currency==='ZMW')}</ReferencePanel>
       <ReferencePanel title="Orders by Status" to="/portal/admin/orders"><OrderSummaryRows counts={data?.order_counts} loading={state.loading}/></ReferencePanel>
-      <ReferencePanel title="Top Performing Categories" soon><PendingPanel icon="grid" text="Category revenue attribution is not available yet."/></ReferencePanel>
     </div>
     <div className="reference-admin-row row-two">
       <ReferencePanel title="Merchant Registrations" to="/portal/admin/merchants">{chart(merchantGrowth,'Registered merchants')}</ReferencePanel>
       <ReferencePanel title="Customer Registrations">{chart(customerGrowth,'Registered customer accounts')}</ReferencePanel>
       <ReferencePanel title="Stores" to="/portal/admin/stores"><div className="reference-note"><strong>{count(data?.stores)} registered stores</strong><p>Open the store directory to view and manage storefronts.</p><QuickAction label="Onboard merchant" icon="plus" to="/portal/admin/merchants/new"/></div></ReferencePanel>
     </div>
-    <div className="reference-admin-row row-three">
-      <ReferencePanel title="Top Merchants by Transaction Value" soon><PendingPanel text="Merchant payment rankings are not available yet."/></ReferencePanel>
-      <ReferencePanel title="Top Merchants by Growth" soon><PendingPanel text="Matched-period merchant growth rankings are not available yet."/></ReferencePanel>
+    <ReferencePanel title="Business records"><div className="admin-records-shortcuts"><QuickAction label="Business ERP oversight" icon="layers" to="/portal/admin/erp"/><QuickAction label="Service & booking records" icon="calendar" to="/portal/admin/operations"/><QuickAction label="Customer directory" icon="users" to="/portal/admin/customers"/><QuickAction label="Products & Services" icon="package" to="/portal/admin/products"/></div></ReferencePanel>
+    <BusinessModuleDirectory role="admin"/>
+    <div className="reference-admin-row module-admin-row">
       <ReferencePanel title="KYC Review Queue" to="/portal/admin/kyc"><div className="reference-note"><strong>{state.kyc ?? (state.loading?'Loading…':'Unavailable')} pending KYC reviews</strong><p>Review submitted business and identity documents.</p></div></ReferencePanel>
-      <ReferencePanel title="System Alerts" soon><PendingPanel icon="bell" text="Rule-based platform alerts are not available yet."/></ReferencePanel>
+      <ReferencePanel title="Settlement alerts" to="/portal/admin/notifications"><SettlementAlertSummary/></ReferencePanel>
     </div>
   </div>;
 }

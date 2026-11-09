@@ -1,3 +1,4 @@
+import { PaginatedTable } from '@/components/common/PaginatedTable';
 import { useId, useState } from 'react';
 
 export type ChartPoint = { label: string; value: number; count?: number };
@@ -30,7 +31,7 @@ export function TrendChart({ points, valueLabel, countLabel, money = true, area 
       {points.filter((_,index)=>index===0||index===points.length-1||index%Math.max(1,Math.ceil(points.length/6))===0).map(point=><text key={point.label} x={x(points.indexOf(point))} y="176" textAnchor="middle">{point.label}</text>)}
       {countLabel&&<text x="581" y="80" transform="rotate(-90 581 80)" textAnchor="middle">{countLabel}</text>}
     </svg>
-    <details className="reference-chart-data"><summary>View exact values</summary><table><caption className="sr-only">Values underlying {valueLabel}</caption><thead><tr><th scope="col">Date</th><th scope="col">{valueLabel}</th>{countLabel&&<th scope="col">{countLabel}</th>}</tr></thead><tbody>{points.map(point=><tr key={point.label}><th scope="row">{point.label}</th><td>{money ? 'K ' : ''}{point.value.toLocaleString('en-ZM',{maximumFractionDigits:2})}</td>{countLabel&&<td>{point.count??0}</td>}</tr>)}</tbody></table></details>
+    <details className="reference-chart-data"><summary>View exact values</summary><PaginatedTable><caption className="sr-only">Values underlying {valueLabel}</caption><thead><tr><th scope="col">Date</th><th scope="col">{valueLabel}</th>{countLabel&&<th scope="col">{countLabel}</th>}</tr></thead><tbody>{points.map(point=><tr key={point.label}><th scope="row">{point.label}</th><td>{money ? 'K ' : ''}{point.value.toLocaleString('en-ZM',{maximumFractionDigits:2})}</td>{countLabel&&<td>{point.count??0}</td>}</tr>)}</tbody></PaginatedTable></details>
   </div>;
 }
 

@@ -1,8 +1,5 @@
 import { Link } from 'react-router-dom';
-
-function GeepayLogo({ className = '' }) {
-  return <img src="/brand/geepay-wordmark.png" alt="GeePay" width={1774} height={887} className={className} style={{width:128,height:64,objectFit:'contain',background:'#fff',borderRadius:6}} />;
-}
+import { GeePayLogo } from '@/components/shared/GeePayLogo';
 
 export function OnboardingLayout({ title, subtitle, steps, currentStep, children, footer }) {
   const stepIndex = steps.findIndex((s) => s.id === currentStep);
@@ -13,7 +10,7 @@ export function OnboardingLayout({ title, subtitle, steps, currentStep, children
         <aside className="auth-brand-panel relative hidden w-[38%] flex-col justify-between overflow-hidden p-8 lg:flex">
           <div className="auth-brand-glow pointer-events-none absolute inset-0" aria-hidden="true" />
           <div className="relative z-10">
-            <GeepayLogo className="h-12 w-12" />
+            <GeePayLogo surface="dark" />
             <p className="mt-4 font-serif text-2xl font-medium text-cream">{title}</p>
             {subtitle && <p className="mt-2 text-sm leading-relaxed text-cream/70">{subtitle}</p>}
           </div>
@@ -48,7 +45,7 @@ export function OnboardingLayout({ title, subtitle, steps, currentStep, children
 
         <main className="flex flex-1 flex-col px-6 py-8 sm:px-10">
           <div className="mb-6 flex items-center justify-between lg:hidden">
-            <GeepayLogo className="h-9 w-9" />
+            <GeePayLogo />
             <StepIndicator steps={steps} currentStep={currentStep} compact />
           </div>
           <div className="mb-5 lg:hidden"><h1 className="text-xl font-semibold text-charcoal">{title}</h1>{subtitle && <p className="mt-2 text-sm leading-relaxed text-forest-muted">{subtitle}</p>}</div>

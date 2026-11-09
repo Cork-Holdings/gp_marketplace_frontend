@@ -14,20 +14,20 @@ export const PermissionsContext = createContext<PermissionsContextValue | null>(
 
 export function PermissionsProvider({ children }: { children: ReactNode }) {
   const { selectedStore, initialized, loading: storesLoading } = useMarketplace();
-  const { user, isMerchant } = useAuth();
+  const { user, isMerchant, isAdmin } = useAuth();
   const [permissions, setPermissions] = useState<Set<string>>(new Set());
   const [fetching, setFetching] = useState(false);
   const [resolvedKey, setResolvedKey] = useState('');
   const version = useRef(0);
 
-  const merchantId = selectedStore?.merchant_id as string | undefined;
+  const merchantId = isMerchant ? selectedStore?.merchant_id as string | undefined : undefined;
   const key = `${user?.id ?? ''}:${merchantId ?? ''}`;
-  const loading = fetching || (isMerchant && (!initialized || storesLoading || resolvedKey !== key));
+  const loading = fetching || (isAdmin && resolvedKey !== key) || (isMerchant && (!initialized || storesLoading || resolvedKey !== key));
   const currentPermissions = useMemo(() => resolvedKey === key ? permissions : new Set<string>(), [key, resolvedKey, permissions]);
 
   const refresh = useCallback(async () => {
     const request = ++version.current;
-    if (!merchantId) {
+    if (!user?.id || (!isAdmin && !merchantId)) {
       setPermissions(new Set());
       setResolvedKey(key);
       setFetching(false);
@@ -43,7 +43,7 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
     } finally {
       if (request === version.current) { setFetching(false); setResolvedKey(key); }
     }
-  }, [merchantId, key]);
+  }, [merchantId, key, isAdmin, user?.id]);
 
   useEffect(() => {
     void refresh();

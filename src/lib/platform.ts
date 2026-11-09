@@ -18,6 +18,10 @@ export const platformApi = {
 export type PlanRequest={merchant_id:string;merchant_name:string;plan_slug:string;billing_interval:string;requested_at:string};
 export const essentialFeatures=['catalog','orders','bookings','quotes','jobs','custom'];
 export function planFeatureForPath(path:string):string|undefined {
+ if(path.startsWith('/portal/owner/purchasing')||path.startsWith('/portal/owner/stock-control'))return 'inventory';
+ if(path.startsWith('/portal/owner/accounting')||path.startsWith('/portal/owner/reports')||path.startsWith('/portal/owner/reconciliation'))return 'accounting';
+ if(path.startsWith('/portal/owner/people'))return 'hr';
+ if(path.startsWith('/portal/owner/customers'))return 'crm';
  if(path.startsWith('/portal/owner/inventory'))return 'inventory';
  if(path.startsWith('/portal/owner/counter'))return 'sales';
  return undefined;

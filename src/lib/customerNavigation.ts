@@ -9,7 +9,7 @@ export const customerNavigation = [
     { to: '/account/quotes', label: 'Estimates', icon: 'quotes' },
     { to: '/account/jobs', label: 'Service visits', icon: 'jobs' },
   ] },
-  { id: 'money', label: 'Payments & receipts', items: [{ to: '/account/transactions', label: 'Payments', icon: 'payments' }] },
+  { id: 'money', label: 'Payments & receipts', items: [{ to: '/account/invoices', label: 'Invoices', icon: 'payments' },{ to: '/account/transactions', label: 'Payments', icon: 'payments' }] },
 ] as const;
 
 export type CustomerNavItem = (typeof customerNavigation)[number]['items'][number];

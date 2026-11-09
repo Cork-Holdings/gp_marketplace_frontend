@@ -2,6 +2,7 @@ import secureApi from '../crud';
 import { getRoute, withQuery } from '../end_points';
 
 export const CustomerService = {
+  listPaymentReceipts: (params: Record<string, string | number> = {}) => secureApi.get(withQuery('/customers/me/payment-receipts', params)),
   createServiceInquiry: (payload: unknown) => secureApi.post('/customers/me/service-quotes', payload),
   getPurchaseHistory: (params: Record<string, string | number> = {}) =>
     secureApi.get(withQuery(getRoute('GET_PURCHASE_HISTORY'), params)),

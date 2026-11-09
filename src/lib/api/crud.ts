@@ -201,7 +201,8 @@ export async function secureFetch(path: string, options: SecureFetchOptions = {}
   const requestId = createRequestId();
   const method = (options.method || 'GET').toUpperCase();
   const mutation = /^(POST|PUT|PATCH|DELETE)$/.test(method);
-  const silent = /\/(?:login|logout|refresh)(?:\/|\?|$)/.test(path);
+  // ERP forms announce their own saving, success and recovery state in place.
+  const silent = /\/(?:login|logout|refresh)(?:\/|\?|$)/.test(path) || /\/settlements\/alerts\/[^/]+\/read$/.test(path) || /\/erp\//.test(path);
   const endAction = mutation && !silent ? beginAction() : () => {};
   try {
     const result = await executeFetch(path, options, requestId);

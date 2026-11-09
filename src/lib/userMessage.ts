@@ -12,6 +12,14 @@ const PAYMENT_CHECK = 'We could not confirm the payment result. Check payment st
 const DEFAULT_MESSAGE = 'We could not complete that action. Refresh the page and check the latest details before trying again. If it keeps happening, contact support.';
 
 const rules: ReadonlyArray<readonly [RegExp, string]> = [
+  [/calendar_conflict|time is no longer available for this employee/, 'That time is no longer available for this employee or resource. Refresh available times and choose another slot.'],
+  [/calendar_window|choose a future visit time within 90 days/, 'Choose a future visit within 90 days, lasting 15 minutes to 4 hours. All visit times are Zambia time.'],
+  [/calendar_employee|choose an active team member with access/, 'Choose an active team member with access to this branch. Employee resources can take one booking at a time.'],
+  [/calendar_immutable|customer has already received this visit proposal|use the visit time accepted by the customer/, 'Keep the visit time already agreed with the customer. A different time needs a new agreement.'],
+  [/history has changed or has not been reviewed/, 'Reload and review the full service history and reported issues before authorising disbursement. The record may have changed since your last review.'],
+  [/only finance or super administrators/, 'Only a finance or super administrator can make this settlement decision.'],
+  [/this settlement action is unavailable/, 'This settlement action is unavailable. Refresh and check payment, dispute and payout status before proceeding.'],
+  [/settlement details are unavailable/, 'Settlement details are unavailable. Check the existing payout status before authorising another attempt.'],
   [/this record changed/, 'This record was updated elsewhere. Reload it before saving your changes again.'],
   [/choose another free active default plan/, 'Set another free, active plan as the default before changing this plan.'],
   [/core catalogue and fulfilment/, 'Keep the core catalogue and fulfilment modules enabled so existing customer work remains accessible.'],
@@ -115,7 +123,7 @@ const rules: ReadonlyArray<readonly [RegExp, string]> = [
 ];
 
 export function isBookingTimeConflict(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && 'code' in error && ['BOOKING_TIME_UNAVAILABLE', 'booking_capacity', 'booking_outside_hours', 'booking_service_unavailable'].includes(String(error.code));
+  return typeof error === 'object' && error !== null && 'code' in error && ['BOOKING_TIME_UNAVAILABLE', 'booking_capacity', 'booking_outside_hours', 'booking_service_unavailable', 'calendar_conflict'].includes(String(error.code));
 }
 
 export function errorMessage(message: unknown, context: ErrorContext = {}): string {

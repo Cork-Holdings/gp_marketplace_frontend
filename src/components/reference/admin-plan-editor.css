@@ -1,0 +1,89 @@
+.admin-plan-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+.admin-plan-editor {
+  max-width: 1240px;
+  margin: auto;
+}
+.admin-plan-editor form > section + section {
+  border-top: 1px solid #e0e7ef;
+  margin-top: 28px;
+  padding-top: 24px;
+}
+.admin-plan-editor .platform-editor h2 {
+  font-size: 21px;
+}
+.admin-plan-editor .platform-editor > section > p {
+  color: #526680;
+  font-size: 14px;
+  margin: 8px 0 20px;
+}
+.admin-plan-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.admin-plan-feature-grid .platform-check {
+  padding: 12px;
+  background: #f5f8fc;
+  border-radius: 8px;
+  min-height: 48px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.admin-plan-feature-grid small {
+  font-size: 12px;
+  font-weight: 400;
+  color: #526680;
+}
+.admin-plan-preview > strong {
+  font-size: 28px;
+  display: block;
+  margin: 20px 0 6px;
+}
+.admin-plan-preview > strong small {
+  font-size: 14px;
+  font-weight: 400;
+}
+.admin-plan-preview h3 {
+  font-size: 15px;
+  margin: 24px 0 10px;
+}
+.admin-plan-preview li {
+  padding: 6px 0;
+  color: #526680;
+}
+.admin-plan-editor .platform-actions button {
+  min-height: 44px;
+}
+.admin-plan-editor :focus-visible {
+  outline: 2px solid #257dc1;
+  outline-offset: 3px;
+}
+@media (max-width: 900px) {
+  .admin-plan-editor-layout {
+    grid-template-columns: 1fr;
+  }
+  .admin-plan-preview {
+    order: 2;
+  }
+}
+@media (max-width: 540px) {
+  .admin-plan-feature-grid,
+  .admin-plan-editor .platform-two {
+    grid-template-columns: 1fr;
+  }
+  .admin-plan-editor .platform-editor {
+    padding: 18px;
+  }
+  .admin-plan-editor .platform-check {
+    align-items: flex-start;
+  }
+  .admin-plan-editor .platform-actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}

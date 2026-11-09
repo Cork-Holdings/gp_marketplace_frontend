@@ -1,6 +1,7 @@
 import { formatCurrency } from '@/lib/utils';
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from '@/lib/locale';
 import { statusLabelForOrder } from '@/lib/workflows';
+import { ReceiptPaper } from './ReceiptPaper';
 
 function modifiersFromItem(item) {
   const attrs = item?.variant_attributes ?? {};
@@ -49,7 +50,7 @@ export function OrderReceipt({
   const total = order.total ?? order.total_amount;
 
   return (
-    <div id="receipt-print" className="receipt-root rounded-2xl border border-cream-dark bg-white p-5 shadow-sm print:border-0 print:shadow-none">
+    <ReceiptPaper id="receipt-print">
       {/* Print header — hidden on screen if store name already shown in page */}
       <div className="receipt-print-header mb-4 hidden border-b border-dashed border-charcoal/20 pb-4 print:block">
         <p className="text-center text-lg font-bold text-charcoal">{displayStore ?? 'Receipt'}</p>
@@ -189,7 +190,7 @@ export function OrderReceipt({
           Print receipt
         </button>
       )}
-    </div>
+    </ReceiptPaper>
   );
 }
 

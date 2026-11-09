@@ -6,7 +6,7 @@ export default {
     extend: {
       // ─────────────────────────────────────────────────────────────────────
       // GEEPAY MARKETPLACE BRAND COLOURS
-      // Same cobalt / sky / navy as the platform. Flat CTAs (no button gradients).
+      // Platform palette. CTAs default to flat; selected brand actions opt in via CSS.
       // gp-* is the canonical namespace; cobalt / sky / navy aliases stay for
       // existing class names.
       // ─────────────────────────────────────────────────────────────────────

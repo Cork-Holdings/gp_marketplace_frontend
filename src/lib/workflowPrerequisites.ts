@@ -17,6 +17,6 @@ export function jobActionBlock({ checking, readiness, assigned, needsEvidence, h
   if (checking) return 'Checking payment confirmation…';
   if (!readiness) return 'Payment confirmation is unavailable. Refresh payment readiness before continuing.';
   if (!readiness.first_confirmed) return 'Waiting for the customer’s payment. They can pay from their accepted estimate. Dispatch and work become available once payment is confirmed.';
-  if (needsEvidence && !hasEvidence) return 'Record the completed work before asking the customer to review it.';
+  if (needsEvidence && !hasEvidence) return 'Payment is confirmed. A work note is still required. Describe the completed work below and click “Record note”, then submit for customer confirmation.';
   return null;
 }

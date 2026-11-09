@@ -2,12 +2,18 @@ import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/context/useAuth';
-import { groupReferenceMenu, referenceActive, featurePath, type ReferenceMenuItem, type ReferenceRole } from '@/lib/referenceNavigation';
+import { groupReferenceMenu, referenceActive, type ReferenceMenuItem, type ReferenceRole } from '@/lib/referenceNavigation';
 import type { ActivityCounts } from '@/hooks/useActivityCounts';
 import type { Store } from '@/types/store';
-import { MarketplaceBrand, Photo, Soon } from './ReferenceUI';
+import { MarketplaceBrand, Photo } from './ReferenceUI';
 import { ReferenceIcon } from './ReferenceIcon';
 import { MobileMarketplaceNav } from './MobileMarketplaceNav';
+import { SettlementNotificationBell } from '@/components/payments/SettlementAlerts';
+import {CustomerInvoiceBell} from '@/components/erp/CustomerInvoiceBell';
+import {ERPNotificationBell} from '@/components/erp/ERPActivitySummary';
+import {usePermissions} from '@/lib/context/permissions';
+import { moduleForPath } from '@/lib/erpModules';
+import './module-overview.css';
 type Props = {
     role: ReferenceRole;
     items: ReferenceMenuItem[];
@@ -18,6 +24,7 @@ type Props = {
 };
 export function ReferenceShell({ role, items, counts, stores = [], store, onStoreChange }: Props) {
     const { user, logout } = useAuth();
+    const {hasPermission}=usePermissions();
     const location = useLocation();
     const navigate = useNavigate();
     const [open, setOpen] = useState(false);
@@ -29,17 +36,28 @@ export function ReferenceShell({ role, items, counts, stores = [], store, onStor
     useEffect(() => { setOpen(false); setSearch(''); document.getElementById(mainId)?.scrollTo({ top: 0 }); }, [location.pathname, mainId]);
     useEffect(() => { const media = matchMedia('(min-width:1024px)'); const close = () => { if (media.matches)
         setOpen(false); }; media.addEventListener('change', close); return () => media.removeEventListener('change', close); }, []);
-    const matches = search.trim() ? items.filter(item => item.label.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 8) : [];
-    const nav = <nav className="reference-menu" aria-label={`${role} sections`}>{groupReferenceMenu(items).map(group => <section className="reference-menu-group" key={group.label || 'overview'} aria-label={group.label || 'Overview'}>{group.label && <h2>{group.label}</h2>}{group.items.map(item => {
+    const workingItems=items.filter(item=>!item.comingSoon);
+    const activeTo=workingItems.reduce((best,item)=>referenceActive(location.pathname,item.to)&&item.to.length>best.length?item.to:best,'');
+    const matches = search.trim() ? workingItems.filter(item => item.label.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 8) : [];
+    const nav = <nav className="reference-menu" aria-label={`${role} sections`}>{groupReferenceMenu(workingItems).map(group => {
+      const links = group.items.map(item => {
                 const count = item.countKey ? counts[item.countKey] : undefined;
-                return <Link key={item.to} to={item.to} className={`reference-menu-link${referenceActive(location.pathname, item.to) ? ' is-active' : ''}`} aria-current={referenceActive(location.pathname, item.to) ? 'page' : undefined} onClick={() => setOpen(false)}><ReferenceIcon name={item.icon}/><span>{item.label}</span>{item.comingSoon ? <Soon /> : count !== undefined && count > 0 ? <span className="reference-count" aria-label={`${count} total, not unread notifications`}>{count > 99 ? '99+' : count}</span> : null}</Link>;
-            })}</section>)}</nav>;
+                return <Link key={item.to} to={item.to} className={`reference-menu-link${item.to===activeTo ? ' is-active' : ''}`} aria-current={item.to===activeTo ? 'page' : undefined} onClick={() => setOpen(false)}><ReferenceIcon name={item.icon}/><span>{item.label}</span>{count !== undefined && count > 0 ? <span className="reference-count" aria-label={`${count} total, not unread notifications`}>{count > 99 ? '99+' : count}</span> : null}</Link>;
+            });
+      if (!group.to) return <section className="reference-menu-group" key={group.label || 'overview'} aria-label={group.label || 'Overview'}>{group.label && <h2>{group.label}</h2>}{links}</section>;
+      const activeModule = moduleForPath(location.pathname);
+      const active = group.to.endsWith(`/${activeModule?.id}`)||location.pathname===root&&group.to.endsWith('/sales');
+      return <details key={`${group.to}:${active}`} className="reference-module-nav" open={active}>
+        <summary><span>{group.label}</span><ReferenceIcon name="chevron" size={16}/></summary>
+        {links}<Link className={`reference-menu-link reference-module-overview${location.pathname === group.to ? ' is-active' : ''}`} to={group.to} aria-current={location.pathname === group.to ? 'page' : undefined} onClick={() => setOpen(false)}><ReferenceIcon name="layers" size={16}/><span>Module overview</span></Link>
+      </details>;
+    })}</nav>;
     const sidebar = <aside className="reference-sidebar">
-    <div className="reference-sidebar-brand"><Link to={root} aria-label="GeePay Marketplace dashboard"><MarketplaceBrand compact/></Link></div>
+    <div className="reference-sidebar-brand"><Link to={root} aria-label="GeePay Marketplace dashboard"><MarketplaceBrand compact dark={role === 'admin'}/></Link></div>
     {role === 'owner' && <div className="reference-store-identity"><Photo src={store?.logo_url || store?.image_url} className="reference-store-avatar"/><div><strong>{store?.name ?? 'Choose a business'}</strong><p>{store?.branch_name ?? 'Merchant workspace'}</p>{store?.slug && <Link to={`/store/${encodeURIComponent(store.slug)}`}>View Store <ReferenceIcon name="arrow" size={11}/></Link>}</div></div>}
     {role === 'customer' && <div className="reference-store-identity"><span className="reference-initials">{initials}</span><div><strong>{name}</strong><p>Your GeePay account</p><Link to="/">Browse Marketplace <ReferenceIcon name="arrow" size={11}/></Link></div></div>}
     {nav}
-    <Link to={featurePath(role, 'support')} className="reference-help"><ReferenceIcon name="headset" size={25}/><span><strong>Need Help?</strong><small>Support options · Coming soon</small></span></Link>
+
   </aside>;
     return <DialogPrimitive.Root open={open} onOpenChange={setOpen}>
     <div className={`reference-shell is-${role}`}>
@@ -50,13 +68,13 @@ export function ReferenceShell({ role, items, counts, stores = [], store, onStor
         <header className="reference-topbar">
           <DialogPrimitive.Trigger asChild><button type="button" className="reference-icon-button reference-mobile-trigger" aria-label="Open navigation menu"><ReferenceIcon name="menu"/></button></DialogPrimitive.Trigger>
           <div className="reference-global-search"><ReferenceIcon name="search" size={18}/><label className="sr-only" htmlFor={`reference-search-${role}`}>Search available menu sections</label><input id={`reference-search-${role}`} type="search" autoComplete="off" maxLength={100} placeholder={role === 'admin' ? 'Search merchants, customers, orders, products, reports...' : role === 'customer' ? 'Search orders, bookings, estimates, payments...' : 'Search orders, customers, products, reports...'} value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => { if (e.key === 'Escape')
-        setSearch(''); }} aria-describedby={search ? 'reference-search-help' : undefined}/>{search && <div className="reference-search-results" id="reference-search-help"><p>Matching menu sections. Search individual records inside their section.</p>{matches.length ? matches.map(item => <Link key={item.to} to={item.to} onClick={() => setSearch('')}><span>{item.label}</span>{item.comingSoon && <Soon />}</Link>) : <p>No matching section. Global record search is coming soon.</p>}</div>}</div>
+        setSearch(''); }} aria-describedby={search ? 'reference-search-help' : undefined}/>{search && <div className="reference-search-results" id="reference-search-help"><p>Matching menu sections. Search individual records inside their section.</p>{matches.length ? matches.map(item => <Link key={item.to} to={item.to} onClick={() => setSearch('')}><span>{item.label}</span></Link>) : <p>No matching section. Search within the relevant workspace.</p>}</div>}</div>
           {role === 'owner' && stores.length > 0 && <div className="reference-branch-strip"><label htmlFor="reference-branch">Branch</label><select id="reference-branch" value={store?.id ?? ''} onChange={e => onStoreChange?.(e.target.value)}>{!store && <option value="">Choose a branch</option>}{stores.map(item => <option key={item.id} value={item.id}>{item.branch_name || item.name}</option>)}</select></div>}
           {role === 'admin' && <span className="reference-admin-period"><ReferenceIcon name="calendar" size={16}/>All-time totals · 30-day trends</span>}
           <div className="reference-topbar-actions">
-            <Link className="reference-icon-button" aria-label="Notifications, coming soon" title="Notifications · Coming soon" to={featurePath(role, 'notifications')}><ReferenceIcon name="bell"/></Link>
-            <Link className="reference-icon-button" aria-label="Help, coming soon" to={featurePath(role, 'support')}><ReferenceIcon name="help"/></Link>
-            <details className="reference-profile"><summary aria-label={`${name}, account options`}><span className="reference-initials">{initials}</span><span><strong>{name}</strong><small>{role === 'admin' ? 'Administrator' : role === 'owner' ? 'Owner / staff' : 'Customer'}</small></span><ReferenceIcon name="chevron" size={15}/></summary><div className="reference-profile-menu"><Link to="/">Browse Marketplace</Link><Link to={featurePath(role, 'settings')}>Settings · Coming soon</Link><button type="button" onClick={() => { logout(); navigate('/login'); }}>Sign out</button></div></details>
+            {role==='admin'?<SettlementNotificationBell/>:role==='owner'&&hasPermission('erp.finance')?<ERPNotificationBell/>:role==='customer'?<CustomerInvoiceBell/>:null}
+
+            <details className="reference-profile"><summary aria-label={`${name}, account options`}><span className="reference-initials">{initials}</span><span><strong>{name}</strong><small>{role === 'admin' ? 'Administrator' : role === 'owner' ? 'Owner / staff' : 'Customer'}</small></span><ReferenceIcon name="chevron" size={15}/></summary><div className="reference-profile-menu"><Link to="/">Browse Marketplace</Link>{role==='owner'&&hasPermission('stores.update')&&<Link to="/portal/owner/store-settings">Business settings</Link>}<button type="button" onClick={() => { logout(); navigate('/login'); }}>Sign out</button></div></details>
           </div>
         </header>
 

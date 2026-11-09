@@ -1,12 +1,13 @@
 /* Supplied GeePay guide. Landing direction: preserve; variance 3, motion 2, density 5. */
 .reference-shell,.reference-page,.reference-marketplace,.reference-store {--ref-primary:#1C639A}
 .reference-shell :is(a,button,input,select,textarea,summary):focus-visible,.reference-marketplace :is(a,button,input,select,summary):focus-visible {outline-color:#1C639A}
-.reference-brand-lockup {display:flex!important;align-items:center!important;justify-content:center;gap:4px}
-.reference-brand-lockup img {width:126px;height:63px;object-fit:contain;flex-shrink:0}
+.reference-brand-lockup {display:flex!important;flex-direction:column;align-items:center!important;justify-content:center;gap:4px!important}
+.reference-brand-lockup img {width:126px;height:32px;object-fit:contain;flex-shrink:0}
+/* The supplied light artwork includes vertical whitespace; crop only that box. */
+.reference-brand-lockup img[src="/brand/geepay-wordmark.png"] {object-fit:cover}
 .reference-brand-lockup strong {font-size:13px!important;color:#10182B}
-.reference-brand small {margin-top:0!important;padding:0 0 8px}
-.is-admin .reference-sidebar .reference-brand-lockup {background:#fff;border-radius:6px;padding:0 6px}
-.is-admin .reference-sidebar .reference-brand-lockup strong {color:#10182B}
+.reference-brand small {margin-top:6px!important;padding:0 0 8px}
+.is-admin .reference-sidebar .reference-brand-lockup strong {color:#fdfdff}
 /* Dashboard summaries carry the full brand palette; unavailable figures stay quiet. */
 .reference-shell .reference-metrics .reference-metric {
  --metric-bg:#30C5F4; --metric-ink:#10182B; --metric-detail:#13394B;
@@ -66,7 +67,7 @@
 .reference-plan-card header p {font-size:12px}
 .reference-plan-card li {font-size:12px}
 @media(max-width:760px) {
- .reference-brand-lockup img {width:100px;height:50px}
+ .reference-brand-lockup img {width:100px;height:26px}
  .reference-brand-lockup strong {font-size:11px!important}
  .reference-deals-grid {display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:16px!important;padding:2px 2px 14px}
  .reference-deal {flex:0 0 83%;min-width:0;scroll-snap-align:start;min-height:148px!important;padding:20px!important}

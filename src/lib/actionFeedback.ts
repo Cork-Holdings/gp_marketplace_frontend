@@ -19,6 +19,15 @@ export function beginAction() {
   return () => { if (!ended) { ended = true; update({ ...snapshot, pending: Math.max(0, snapshot.pending - 1) }); } };
 }
 export function actionSuccessMessage(path: string, method: string): string {
+  if (/\/erp\//.test(path)) {
+    if (/\/payment$/.test(path)) return 'External payment evidence recorded. No transfer was initiated.';
+    if (/\/receive$/.test(path)) return 'Goods received and stock updated.';
+    if (/\/post$/.test(path)) return 'Document posted to the accounting ledger.';
+    if (/\/reverse$/.test(path)) return 'Reversal recorded. Original history retained.';
+    if (/\/read$/.test(path)) return 'Marked as read.';
+    return 'Business record saved.';
+  }
+  if (/\/settlements\//.test(path)) return 'Settlement record updated. Check the financial status; this is not confirmation of a transfer.';
   if (/collect|payment/.test(path)) return 'Payment request updated. Check its status before trying again.';
   if (/register|onboard/.test(path)) return 'Application submitted. You can continue setting up your business while it is reviewed.';
   if (/image|upload/.test(path)) return 'File uploaded.';

@@ -5,12 +5,13 @@ import { Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/lib/context/useAuth';
 import { useMarketplace } from '@/lib/context/useMarketplace';
 import { useFetchWrapper } from '@/hooks/useFetchWrapper';
-import { ownerApi } from '@/lib/api/services';
+import { ownerApi, rolesApi } from '@/lib/api/services';
 import { ErrorState } from '@/components/common/ErrorState';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { BookingAgenda } from '@/components/bookings/BookingAgenda';
 import { BookingSlotPicker } from '@/components/bookings/BookingSlotPicker';
 import { BookingHoursEditor } from '@/components/bookings/BookingHoursEditor';
+import { EmployeeDayCalendar } from '@/components/bookings/EmployeeDayCalendar';
 import { WorkflowIcon } from '@/components/common/WorkflowIcon';
 import { notifyActivityChanged } from '@/hooks/useActivityCounts';
 import type { BookableService, MerchantResource, Reservation, ReservationKind, ReservationStatus } from '@/types/serviceQuote';
@@ -34,7 +35,11 @@ export default function ReservationsPage() {
   const [params, setParams] = useSearchParams();
   const detailId = params.get('detail') ?? '';
   const { isStoreOwner } = useAuth();
-  const { selectedStoreId: storeId } = useMarketplace();
+  const { selectedStoreId: storeId, selectedStore } = useMarketplace();
+  const {data:teamData}=useFetchWrapper(()=>selectedStore?.merchant_id ? rolesApi.listMembers(selectedStore.merchant_id) : Promise.resolve({members:[]}),[selectedStore?.merchant_id],{enabled:Boolean(selectedStore?.merchant_id)});
+  type TeamMember={user_id:string;display_name?:string;member_role?:string;is_active:boolean;store_ids?:string[];user?:{full_name?:string}};
+  const team:TeamMember[]=(teamData?.members ?? []).filter((m:TeamMember)=>m.is_active && m.member_role!=='viewer' && (!m.store_ids?.length || m.store_ids.includes(storeId ?? '')));
+  const [employeeId,setEmployeeId]=useState('');
   const [query, setQuery] = useState('');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
@@ -91,7 +96,7 @@ export default function ReservationsPage() {
 
   async function createResource(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (!storeId) return; setWorking(true); setFeedback(null);
-    try { await ownerApi.createResource(storeId, { name: name.trim(), resource_type: 'appointment', capacity: Number(capacity) }); setName(''); setCapacity('1'); await reloadResources(); setFeedback({ text: 'Bookable resource added.', error: false }); }
+    try { await ownerApi.createResource(storeId, { name: name.trim(), resource_type: employeeId ? 'employee' : 'appointment', capacity: employeeId ? 1 : Number(capacity), employee_user_id:employeeId || undefined }); setName(''); setCapacity('1'); setEmployeeId(''); await reloadResources(); setFeedback({ text: 'Bookable resource added.', error: false }); }
     catch (err) { setFeedback({ text: userMessage(err, 'Could not add the resource.'), error: true }); }
     finally { setWorking(false); }
   }
@@ -136,6 +141,7 @@ export default function ReservationsPage() {
   return <section className="workflow-page" aria-label="Bookings workspace"><header className="workflow-header"><p className="workflow-eyebrow">Operations</p><h1>Bookings</h1><p>Manage appointment capacity, customer requests and check-ins for this business.</p></header>
     {feedback && <p role={feedback.error ? 'alert' : 'status'} className={feedback.error ? 'workflow-feedback is-error' : 'workflow-feedback'}>{feedback.text}</p>}
     <div className="booking-view-switch owner-booking-navigation" role="group" aria-label="Booking view"><button type="button" aria-pressed={view === 'schedule'} onClick={() => setView('schedule')}><WorkflowIcon name="calendar" />Schedule</button><button type="button" aria-pressed={view === 'new'} onClick={() => setView('new')}><WorkflowIcon name="plus" />Add booking</button><button type="button" aria-pressed={view === 'setup'} onClick={() => setView('setup')}><WorkflowIcon name="settings" />Booking setup</button></div>
+    {view==='schedule' && storeId && !detailId && <EmployeeDayCalendar key={storeId} storeId={storeId} />}
     <div className="workflow-layout booking-single-layout">{view === 'new' && <section className="workflow-panel" aria-labelledby="new-booking-heading"><div className="workflow-panel-heading"><h2 id="new-booking-heading">Add a booking</h2><p>Use the customer’s account email. We look up their details.</p></div>
       <form className="workflow-form" onSubmit={createBooking}>
         {kind === 'appointment' && servicesError && <ErrorState error={servicesError} onRetry={reloadServices} />}
@@ -163,7 +169,15 @@ export default function ReservationsPage() {
       {matchingServices.length > SERVICE_PAGE_SIZE && <nav className="booking-pagination" aria-label="Service pages"><span>Page {servicePage + 1} of {Math.ceil(matchingServices.length / SERVICE_PAGE_SIZE)}</span><div><button type="button" disabled={servicePage === 0} onClick={() => setServicePage(servicePage - 1)}>Previous</button><button type="button" disabled={(servicePage + 1) * SERVICE_PAGE_SIZE >= matchingServices.length} onClick={() => setServicePage(servicePage + 1)}>Next</button></div></nav>}
     </section></div>
     <div id="booking-setup-panel-resources" role="tabpanel" aria-labelledby="booking-setup-tab-resources" hidden={setupSection !== 'resources'}><section className="workflow-panel" aria-labelledby="resource-heading"><div className="workflow-panel-heading"><h2 id="resource-heading">Bookable resources</h2><p>Add the staff, chairs, bays or rooms used for appointments. Capacity is the number of bookings a resource can handle at the same time.</p></div>
-      <details className="booking-setup-add" key={`resource-${storeId}-${Boolean(resources.length)}`} open={!resources.length}><summary><WorkflowIcon name="plus" />Add resource</summary><form className="workflow-form workflow-inline-form" onSubmit={createResource}><label>Resource name<input name="resource_name" autoComplete="off" required maxLength={120} value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Service team 1" /></label><label>Bookings at a time<input name="resource_capacity" autoComplete="off" required type="number" min="1" max="100" value={capacity} onChange={e => setCapacity(e.target.value)} /></label><button className="workflow-primary" type="submit" disabled={working || !storeId || resourcesLoading || Boolean(resourcesError)} aria-busy={working}>{working ? 'Saving…' : 'Add resource'}</button></form></details>
+      <details className="booking-setup-add" key={`resource-${storeId}-${Boolean(resources.length)}`} open={!resources.length}><summary><WorkflowIcon name="plus" />Add resource</summary>
+        <form className="workflow-form" onSubmit={createResource}>
+          <label>Resource name<input name="resource_name" autoComplete="off" required maxLength={120} value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Daniel — service visits" /></label>
+          <label>Employee (optional)<select value={employeeId} onChange={e=>{setEmployeeId(e.target.value);if(e.target.value)setCapacity('1');}}><option value="">Shared space or capacity; no employee</option>{team.map(m=><option key={m.user_id} value={m.user_id}>{m.display_name || m.user?.full_name || 'Team member'}</option>)}</select></label>
+          <p className="workflow-help">Link a staff member so appointments and field visits share that employee’s availability. Employee resources accept one booking at a time.</p>
+          <label>Bookings at a time<input name="resource_capacity" autoComplete="off" required type="number" min="1" max="100" disabled={Boolean(employeeId)} value={employeeId?'1':capacity} onChange={e=>setCapacity(e.target.value)} /></label>
+          <button className="workflow-primary" type="submit" disabled={working || !storeId || resourcesLoading || Boolean(resourcesError)} aria-busy={working}>{working?'Saving…':'Add resource'}</button>
+        </form>
+      </details>
       {resourcesLoading ? <p className="workflow-empty" role="status">Loading resources…</p> : resourcesError ? <ErrorState error={resourcesError} onRetry={reloadResources} /> : !resources.length && <p className="workflow-empty">No resources yet. Add the staff or space customers can reserve.</p>}
       {!resourcesLoading && !resourcesError && resources.length > 0 && <ul className="workflow-list">{resources.map(resource => <li key={resource.id} className="workflow-list-item"><div><strong>{resource.name}</strong><span>Capacity {resource.capacity} · {resource.is_active ? 'Available online' : 'Paused'}</span></div><button type="button" className="workflow-text-action" disabled={working} onClick={() => toggleResource(resource)} aria-label={`${resource.is_active ? 'Pause' : 'Enable'} ${resource.name}`}>{resource.is_active ? 'Pause' : 'Enable'}</button></li>)}</ul>}
     </section></div>

@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import {lazy,Suspense} from 'react';
 import { ProtectedRoute } from '@/lib/ProtectedRoute';
 import type { AccountType } from '@/types/auth';
 import { PortalDashboardLayout } from './layouts/PortalDashboardLayout';
@@ -56,17 +57,37 @@ import CustomerServiceQuotesPage from '@/(customer)/quotes/ServiceQuotesPage';
 import CustomerServiceJobsPage from '@/(customer)/jobs/ServiceJobsPage';
 import CustomerReservationsPage from '@/(customer)/bookings/ReservationsPage';
 import CustomerCustomOrdersPage from '@/(customer)/custom-orders/CustomOrdersPage';
-import SettlementRehearsalPage, { MerchantSettlementRehearsalPage } from '@/components/payments/SettlementRehearsalPage';
+import SettlementPage from '@/components/payments/LiveSettlementPage';
+import { SettlementNotificationsPage } from '@/components/payments/SettlementAlerts';
+import { SettlementHistoryPage } from '@/components/payments/SettlementHistory';
 import { ComingSoonPage } from '@/components/reference/ComingSoonPage';
 import { SubscriptionPlansPage } from '@/components/reference/SubscriptionPlansPage';
 import { CategoriesPage } from '@/components/reference/ReferenceMarketplacePage';
 import { InventoryPage, AdminDirectoryPage } from '@/components/reference/ReferenceDirectories';
+import { ModuleOverviewPage } from '@/components/reference/ModuleOverviewPage';
 import { AdminPlansPage } from '@/components/reference/AdminPlansPage';
 import { AdminContentPage } from '@/components/reference/AdminContentPage';
 import { PublishedPage } from '@/components/reference/PublishedPage';
 import { PlanProvider, PlanGate } from '@/lib/context/plan';
 
 const MERCHANT_ROLES: AccountType[] = ['merchant', 'store_owner'];
+const AdminRecordsPage=lazy(()=>import('@/components/reference/AdminRecordsPage'));
+const CustomerInvoicesPage=lazy(()=>import('@/components/erp/CustomerInvoicesPage'));
+const AdminPlanEditorPage=lazy(()=>import('@/components/reference/AdminPlanEditorPage'));
+function AdminRecords({scope}:{scope:'customers'|'products'|'categories'|'operations'|'erp'}){return <Suspense fallback={<p className="reference-note" role="status">Opening admin records…</p>}><AdminRecordsPage scope={scope}/></Suspense>}
+const ERP_VIEWS={
+ purchasing:lazy(()=>import('@/components/erp/PurchasingPage')),
+ stock:lazy(()=>import('@/components/erp/StockPage')),
+ accounting:lazy(()=>import('@/components/erp/AccountingPage')),
+ chart:lazy(()=>import('@/components/erp/ChartOfAccountsPage')),
+ imports:lazy(()=>import('@/components/erp/AccountingImportsPage')),
+ customers:lazy(()=>import('@/components/erp/CustomersPage')),
+ people:lazy(()=>import('@/components/erp/PeoplePage')),
+ reports:lazy(()=>import('@/components/erp/ReportsPage')),
+ activity:lazy(()=>import('@/components/erp/ActivityPage')),
+ reconciliation:lazy(()=>import('@/components/erp/ReconciliationPage')),
+};
+function ERPView({name}:{name:keyof typeof ERP_VIEWS}){const View=ERP_VIEWS[name];return <Suspense fallback={<p className="reference-note" role="status">Opening business workspace…</p>}><View/></Suspense>}
 
 export default function App() {
   return (
@@ -118,9 +139,10 @@ export default function App() {
       />
 
       <Route path="/account/jobs" element={<ProtectedRoute roles={['customer']}><CustomerServiceJobsPage /></ProtectedRoute>} />
+      <Route path="/account/invoices" element={<ProtectedRoute roles={['customer']}><Suspense fallback={<p role="status">Opening invoices…</p>}><CustomerInvoicesPage/></Suspense></ProtectedRoute>}/>
       <Route path="/account/bookings" element={<ProtectedRoute roles={['customer']}><CustomerReservationsPage /></ProtectedRoute>} />
       <Route path="/account/custom-orders" element={<ProtectedRoute roles={['customer']}><CustomerCustomOrdersPage /></ProtectedRoute>} />
-      <Route path="/account/settlements" element={<ProtectedRoute roles={['customer']}><SettlementRehearsalPage mode="customer" /></ProtectedRoute>} />
+      <Route path="/account/settlements" element={<ProtectedRoute roles={['customer']}><SettlementPage mode="customer" /></ProtectedRoute>} />
 
       <Route
         path="/account/transactions"
@@ -158,13 +180,20 @@ export default function App() {
         <Route index element={<PortalHomePage />} />
 
         <Route path="admin" element={<ProtectedRoute roles={['system_admin']}><AdminDashboardPage /></ProtectedRoute>} />
+        <Route path="admin/modules" element={<ProtectedRoute roles={['system_admin']}><ModuleOverviewPage role="admin" /></ProtectedRoute>} />
+        <Route path="admin/modules/:moduleId" element={<ProtectedRoute roles={['system_admin']}><ModuleOverviewPage role="admin" /></ProtectedRoute>} />
         <Route path="admin/plans" element={<ProtectedRoute roles={['system_admin']}><AdminPlansPage /></ProtectedRoute>} />
         <Route path="admin/marketplace" element={<ProtectedRoute roles={['system_admin']}><AdminContentPage kind="marketplace" /></ProtectedRoute>} />
         <Route path="admin/pages" element={<ProtectedRoute roles={['system_admin']}><AdminContentPage kind="page" /></ProtectedRoute>} />
         <Route path="admin/coming-soon/:feature" element={<ProtectedRoute roles={['system_admin']}><ComingSoonPage role="admin" /></ProtectedRoute>} />
         <Route path="admin/orders" element={<ProtectedRoute roles={['system_admin']}><AdminDirectoryPage kind="orders"/></ProtectedRoute>} />
+        <Route path="admin/plans/new" element={<ProtectedRoute roles={['system_admin']}><Suspense fallback={<p role="status">Opening plan editor…</p>}><AdminPlanEditorPage create/></Suspense></ProtectedRoute>}/>
+        <Route path="admin/plans/:slug/edit" element={<ProtectedRoute roles={['system_admin']}><Suspense fallback={<p role="status">Opening plan editor…</p>}><AdminPlanEditorPage/></Suspense></ProtectedRoute>}/>
+        {(['customers','products','categories','operations','erp'] as const).map(scope=><Route key={scope} path={`admin/${scope}`} element={<ProtectedRoute roles={['system_admin']}><AdminRecords scope={scope}/></ProtectedRoute>}/>)}
         <Route path="admin/merchants" element={<ProtectedRoute roles={['system_admin']}><AdminDirectoryPage kind="merchants"/></ProtectedRoute>} />
-        <Route path="admin/settlements" element={<ProtectedRoute roles={['system_admin']}><SettlementRehearsalPage mode="admin" /></ProtectedRoute>} />
+        <Route path="admin/settlements" element={<ProtectedRoute roles={['system_admin']}><SettlementPage mode="admin" /></ProtectedRoute>} />
+        <Route path="admin/notifications" element={<ProtectedRoute roles={['system_admin']}><SettlementNotificationsPage /></ProtectedRoute>} />
+        <Route path="admin/settlements/history/:kind/:id" element={<ProtectedRoute roles={['system_admin']}><SettlementHistoryPage /></ProtectedRoute>} />
         <Route path="admin/kyc" element={<ProtectedRoute roles={['system_admin']}><AdminKycPage /></ProtectedRoute>} />
         <Route path="admin/merchants/new" element={<ProtectedRoute roles={['system_admin']}><AdminMerchantOnboardPage /></ProtectedRoute>} />
         <Route path="admin/admins/new" element={<ProtectedRoute roles={['system_admin']}><PlatformAdminCreatePage /></ProtectedRoute>} />
@@ -172,6 +201,18 @@ export default function App() {
         <Route path="admin/stores/new" element={<ProtectedRoute roles={['system_admin']}><AdminAddStorePage /></ProtectedRoute>} />
 
         <Route path="owner" element={<ProtectedRoute roles={MERCHANT_ROLES}><OwnerDashboardPage /></ProtectedRoute>} />
+        <Route path="owner/purchasing" element={<ProtectedRoute roles={MERCHANT_ROLES} permission="products.view"><PlanGate feature="inventory"><ERPView name="purchasing"/></PlanGate></ProtectedRoute>}/>
+        <Route path="owner/stock-control" element={<ProtectedRoute roles={MERCHANT_ROLES} permission="products.view"><PlanGate feature="inventory"><ERPView name="stock"/></PlanGate></ProtectedRoute>}/>
+        <Route path="owner/accounting" element={<ProtectedRoute roles={MERCHANT_ROLES} permission="erp.finance"><PlanGate feature="accounting"><ERPView name="accounting"/></PlanGate></ProtectedRoute>}/>
+        <Route path="owner/accounting/accounts" element={<ProtectedRoute roles={MERCHANT_ROLES} permission="erp.finance"><PlanGate feature="accounting"><ERPView name="chart"/></PlanGate></ProtectedRoute>}/>
+        <Route path="owner/accounting/imports" element={<ProtectedRoute roles={MERCHANT_ROLES} permission="erp.finance"><PlanGate feature="accounting"><ERPView name="imports"/></PlanGate></ProtectedRoute>}/>
+        <Route path="owner/reconciliation" element={<ProtectedRoute roles={MERCHANT_ROLES} permission="erp.finance"><PlanGate feature="accounting"><ERPView name="reconciliation"/></PlanGate></ProtectedRoute>}/>
+        <Route path="owner/customers" element={<ProtectedRoute roles={MERCHANT_ROLES} permission="erp.customers"><PlanGate feature="crm"><ERPView name="customers"/></PlanGate></ProtectedRoute>}/>
+        <Route path="owner/people" element={<ProtectedRoute roles={MERCHANT_ROLES} permission="erp.people"><PlanGate feature="hr"><ERPView name="people"/></PlanGate></ProtectedRoute>}/>
+        <Route path="owner/reports" element={<ProtectedRoute roles={MERCHANT_ROLES} permission="erp.finance"><PlanGate feature="accounting"><ERPView name="reports"/></PlanGate></ProtectedRoute>}/>
+        <Route path="owner/activity" element={<ProtectedRoute roles={MERCHANT_ROLES} permission="erp.finance"><ERPView name="activity"/></ProtectedRoute>}/>
+        <Route path="owner/modules" element={<ProtectedRoute roles={MERCHANT_ROLES}><ModuleOverviewPage role="owner" /></ProtectedRoute>} />
+        <Route path="owner/modules/:moduleId" element={<ProtectedRoute roles={MERCHANT_ROLES}><ModuleOverviewPage role="owner" /></ProtectedRoute>} />
         <Route path="owner/coming-soon/:feature" element={<ProtectedRoute roles={MERCHANT_ROLES}><ComingSoonPage role="owner" /></ProtectedRoute>} />
         <Route path="owner/plans" element={<ProtectedRoute roles={MERCHANT_ROLES}><SubscriptionPlansPage /></ProtectedRoute>} />
         <Route path="owner/inventory" element={<ProtectedRoute roles={MERCHANT_ROLES} anyPermission={[PERM.productsView]}><PlanGate feature="inventory"><InventoryPage /></PlanGate></ProtectedRoute>} />
@@ -185,7 +226,7 @@ export default function App() {
         <Route path="owner/bookings" element={<ProtectedRoute roles={MERCHANT_ROLES}><MerchantReservationsPage /></ProtectedRoute>} />
         <Route path="owner/custom-orders" element={<ProtectedRoute roles={MERCHANT_ROLES}><MerchantCustomOrdersPage /></ProtectedRoute>} />
         <Route path="owner/transactions" element={<ProtectedRoute roles={MERCHANT_ROLES}><MerchantTransactionsPage /></ProtectedRoute>} />
-        <Route path="owner/settlements" element={<ProtectedRoute roles={MERCHANT_ROLES}><MerchantSettlementRehearsalPage /></ProtectedRoute>} />
+        <Route path="owner/settlements" element={<ProtectedRoute roles={MERCHANT_ROLES} permission={PERM.transactionsView}><SettlementPage mode="merchant" /></ProtectedRoute>} />
         <Route path="owner/transactions/:transactionId" element={<ProtectedRoute roles={MERCHANT_ROLES}><MerchantTransactionDetailPage /></ProtectedRoute>} />
         <Route path="owner/counter" element={<ProtectedRoute roles={MERCHANT_ROLES}><PlanGate feature="sales"><MerchantCounterPage /></PlanGate></ProtectedRoute>} />
         <Route path="owner/menu" element={<ProtectedRoute roles={MERCHANT_ROLES}><MerchantMenuCategoriesPage /></ProtectedRoute>} />

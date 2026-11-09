@@ -49,7 +49,7 @@ export default function MerchantTransactionsPage() {
           <StoreCategoryBadge />
         </div>
       </header>
-      {simulated && <Link to="/portal/owner/settlements" className="flex items-center justify-between gap-3 rounded-xl border border-cream-dark bg-sage/20 p-4 text-sm font-semibold text-forest">View settlement rehearsal for this branch<span aria-hidden="true">→</span></Link>}
+      <Link to="/portal/owner/settlements" className="flex items-center justify-between gap-3 rounded-xl border border-cream-dark bg-sage/20 p-4 text-sm font-semibold text-forest">{simulated?'View settlement rehearsal for this branch':'View quoted-service settlements for this branch'}<span aria-hidden="true">→</span></Link>
 
       {!selectedStoreId ? (
         <EmptyState

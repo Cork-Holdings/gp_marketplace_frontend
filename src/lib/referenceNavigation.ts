@@ -1,3 +1,5 @@
+import { moduleForPath, modulePath, modulesForRole } from './erpModules.ts';
+
 export type ReferenceRole = 'owner' | 'admin' | 'customer';
 export type ReferenceMenuItem = {
   label: string;
@@ -27,11 +29,19 @@ export const ownerReferenceMenu: ReferenceMenuItem[] = [
   { label: 'Sales & POS', to: '/portal/owner/counter', icon: 'chart', group: 'Daily work' },
   { label: 'Kitchen', to: '/portal/owner/kitchen', icon: 'flame', group: 'Daily work', foodOnly: true },
   { label: 'Transactions', to: '/portal/owner/transactions', icon: 'wallet', group: 'Money' },
-  future('owner', 'Accounting', 'accounting', 'document', 'Money'),
+  { label: 'Payments & Settlements', to: '/portal/owner/settlements', icon: 'wallet', group: 'Money' },
+  {label:'Chart of accounts',to:'/portal/owner/accounting/accounts',icon:'layers',group:'Money'},
+  {label:'Accounting imports',to:'/portal/owner/accounting/imports',icon:'document',group:'Money'},
+  {label:'Accounting',to:'/portal/owner/accounting',icon:'document',group:'Money'},
+  {label:'Reconciliation & periods',to:'/portal/owner/reconciliation',icon:'wallet',group:'Money'},
+  {label:'Financial reports',to:'/portal/owner/reports',icon:'chart',group:'Money'},
+  {label:'ERP activity inbox',to:'/portal/owner/activity',icon:'bell',group:'Account'},
   future('owner', 'Financing', 'financing', 'coins', 'Money'),
   { label:'Subscription Plan', to:'/portal/owner/plans',icon:'layers',group:'Money' },
   { label: 'Products & Services', to: '/portal/owner/products', icon: 'package', group: 'Business setup' },
   { label: 'Inventory', to: '/portal/owner/inventory', icon: 'layers', group: 'Business setup' },
+  {label:'Purchasing',to:'/portal/owner/purchasing',icon:'bag',group:'Business setup'},
+  {label:'Stock control',to:'/portal/owner/stock-control',icon:'layers',group:'Business setup'},
   { label: 'Stores', to: '/portal/owner/stores', icon: 'store', group: 'Business setup' },
   { label: 'Branding', to: '/portal/owner/store-settings', icon: 'image', group: 'Business setup' },
   { label: 'Menu', to: '/portal/owner/menu', icon: 'list', group: 'Business setup', foodOnly: true },
@@ -39,8 +49,8 @@ export const ownerReferenceMenu: ReferenceMenuItem[] = [
   future('owner', 'Website', 'website', 'monitor', 'Business setup'),
   { label: 'Team', to: '/portal/owner/team', icon: 'users', group: 'Team & access' },
   { label: 'Roles', to: '/portal/owner/roles', icon: 'shield', group: 'Team & access' },
-  future('owner', 'Employees (HR)', 'hr', 'users', 'Team & access'),
-  future('owner', 'Customers (CRM)', 'crm', 'users', 'Growth & insights'),
+  {label:'Employees (HR)',to:'/portal/owner/people',icon:'users',group:'Team & access'},
+  {label:'Customers (CRM)',to:'/portal/owner/customers',icon:'users',group:'Growth & insights'},
   future('owner', 'Marketing', 'marketing', 'megaphone', 'Growth & insights'),
   future('owner', 'Analytics', 'analytics', 'chart', 'Growth & insights'),
   future('owner', 'Business Services', 'business-services', 'grid', 'Growth & insights'),
@@ -53,11 +63,13 @@ export const adminReferenceMenu: ReferenceMenuItem[] = [
   { label: 'Merchants', to: '/portal/admin/merchants', icon: 'users', group: 'Operations' },
   { label: 'Onboard Merchant', to: '/portal/admin/merchants/new', icon: 'plus', group: 'Operations' },
   { label: 'All Stores', to: '/portal/admin/stores', icon: 'store', group: 'Operations' },
-  future('admin', 'Customers', 'customers', 'users', 'Operations'),
-  future('admin', 'Products & Services', 'products', 'package', 'Catalog'),
-  future('admin', 'Categories', 'categories', 'grid', 'Catalog'),
+  {label:'Service & booking records',to:'/portal/admin/operations',icon:'calendar',group:'Operations'},
+  {label:'Customers',to:'/portal/admin/customers',icon:'users',group:'Operations'},
+  {label:'Products & Services',to:'/portal/admin/products',icon:'package',group:'Catalog'},
+  {label:'Categories',to:'/portal/admin/categories',icon:'grid',group:'Catalog'},
   future('admin', 'Marketing & Promotions', 'marketing', 'megaphone', 'Growth'),
-  future('admin', 'Payments & Settlements', 'settlements', 'wallet', 'Money'),
+  { label:'Payments & Settlements',to:'/portal/admin/settlements',icon:'wallet',group:'Money' },
+  {label:'Business ERP oversight',to:'/portal/admin/erp',icon:'layers',group:'Money'},
   future('admin', 'Commissions & Revenue', 'revenue', 'coins', 'Money'),
   future('admin', 'Reviews & Disputes', 'disputes', 'message', 'Trust & support'),
   { label: 'KYC Review', to: '/portal/admin/kyc', icon: 'shield', group: 'Trust & support' },
@@ -69,6 +81,7 @@ export const adminReferenceMenu: ReferenceMenuItem[] = [
   future('admin', 'System Management', 'system', 'settings', 'Administration'),
   { label: 'Platform Admins', to: '/portal/admin/admins/new', icon: 'users', group: 'Administration' },
   { label:'Subscription plans',to:'/portal/admin/plans',icon:'layers',group:'Administration' },
+  { label:'Settlement alerts',to:'/portal/admin/notifications',icon:'bell',group:'Administration' },
   { label:'Marketplace manager',to:'/portal/admin/marketplace',icon:'store',group:'Administration' },
   { label:'Website pages',to:'/portal/admin/pages',icon:'document',group:'Administration' },
   future('admin', 'Settings', 'settings', 'settings', 'Administration'),
@@ -87,7 +100,20 @@ export const marketplaceReferenceCategories = [
 ] as const;
 
 export function groupReferenceMenu(items: ReferenceMenuItem[]) {
-  const groups: { label: string; items: ReferenceMenuItem[] }[] = [];
+  const role = items.some(item => item.to.startsWith('/portal/admin')) ? 'admin' :
+    items.some(item => item.to.startsWith('/portal/owner')) ? 'owner' : undefined;
+  const groups: { label: string; to?: string; items: ReferenceMenuItem[] }[] = [];
+  if (role) {
+    const overview = items.filter(item => !moduleForPath(item.to));
+    if (overview.length) groups.push({ label: '', items: overview });
+    for (const module of modulesForRole(role)) {
+      const members = items.filter(item => moduleForPath(item.to)?.id === module.id);
+      if (members.length) groups.push({
+        label: module[role]!.title ?? module.title, to: modulePath(role, module.id), items: members,
+      });
+    }
+    return groups;
+  }
   for (const item of items) {
     let group = groups.find(value => value.label === item.group);
     if (!group) { group = { label: item.group, items: [] }; groups.push(group); }

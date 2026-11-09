@@ -13,3 +13,12 @@ test('job progress requires assignment, payment and evidence for review', () => 
   assert.equal(jobActionBlock(job), null);
   for (const change of [{ assigned: false }, { checking: true }, { readiness: null }, { readiness: { first_confirmed: false, balance_confirmed: false } }, { hasEvidence: false }]) assert.ok(jobActionBlock({ ...job, ...change }));
 });
+
+test('missing work notes explain the exact next step without suggesting another payment', () => {
+  const job = { checking: false, readiness: paid, assigned: true, needsEvidence: true, hasEvidence: false };
+  assert.equal(jobActionBlock(job), 'Payment is confirmed. A work note is still required. Describe the completed work below and click “Record note”, then submit for customer confirmation.');
+  assert.equal(jobActionBlock({...job, hasEvidence:true}), null);
+  for(const change of [{checking:true},{readiness:null},{readiness:{first_confirmed:false,balance_confirmed:false}}]) {
+    assert.doesNotMatch(jobActionBlock({...job,...change}), /Payment is confirmed|does not need to pay again/);
+  }
+});

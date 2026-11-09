@@ -1,0 +1,179 @@
+/* Approved readable-grid homepage. Keep shared storefront layouts independent. */
+.reference-marketplace-home {
+  --market-muted: #54647c;
+  --market-link: #1c639a;
+}
+.reference-marketplace-home :is(h1, h2) { font-weight: 700; }
+
+.reference-marketplace-home .reference-market-card-copy {
+  height: auto;
+  flex: 1;
+  padding: 12px;
+}
+.reference-marketplace-home .reference-market-card { display: flex; flex-direction: column; }
+.reference-marketplace-home .reference-market-card h3 {
+  display: block;
+  overflow: visible;
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+.reference-marketplace-home .reference-market-card-category {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--market-muted);
+  margin: 6px 0 12px;
+}
+.reference-marketplace-home .reference-market-card-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 0;
+  margin-top: auto;
+}
+.reference-marketplace-home .reference-market-card-bottom strong {
+  font-size: 16px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+.reference-marketplace-home .reference-market-card-bottom .reference-card-add {
+  position: static;
+  width: auto;
+  height: auto;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 0;
+  border-top: 1px solid #dce5ef;
+  border-radius: 0;
+  background: transparent;
+  color: var(--market-link);
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.reference-marketplace-home .reference-card-add::after { inset: 0; }
+.reference-marketplace-home .reference-card-add svg { width: 20px; height: 20px; flex-shrink: 0; }
+.reference-marketplace-home .reference-favourite {
+  top: 4px;
+  right: 4px;
+  width: 44px !important;
+  height: 44px !important;
+  min-height: 44px;
+}
+.reference-marketplace-home .reference-favourite::after { inset: 0; }
+.reference-marketplace-home .reference-favourite svg { width: 20px !important; height: 20px !important; }
+.reference-marketplace-home .reference-market-meta { color: var(--market-muted); font-size: 13px; }
+.reference-marketplace-home .reference-market-section-head :is(a, button) {
+  color: var(--market-link);
+  font-size: 13px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.reference-marketplace-home .reference-market-business h3 { font-size: 15px; line-height: 1.35; padding: 12px 12px 0; }
+.reference-marketplace-home .reference-market-business p { font-size: 12px; margin: 8px 12px; color: var(--market-muted); }
+.reference-marketplace-home .reference-business-tags { font-size: 12px; margin: 8px 12px 0; }
+.reference-marketplace-home .reference-business-tags a { min-height: 44px; display: inline-flex; align-items: center; }
+.reference-marketplace-home .reference-market-upcoming { margin-top: 32px; color: var(--market-muted); }
+.reference-marketplace-home .reference-market-upcoming summary {
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.reference-marketplace-home .reference-market-upcoming nav { margin-top: 12px; }
+.reference-marketplace-home .reference-market-upcoming small { font-size: 12px; }
+/* Hide chrome, not scrolling. Links remain keyboard reachable in overflow rails. */
+.reference-marketplace-home :is(.reference-market-categories, .reference-deals-grid) {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.reference-marketplace-home :is(.reference-market-categories, .reference-deals-grid)::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+@media (max-width: 767px) {
+  .reference-marketplace-home { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  .reference-marketplace-home .reference-market-container { width: calc(100% - 32px); }
+  .reference-marketplace-home .reference-market-header .discovery-masthead {
+    width: calc(100% - 32px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px 44px;
+    column-gap: 8px;
+    row-gap: 0;
+  }
+  .reference-marketplace-home .discovery-masthead > a:first-child { grid-column: 1; grid-row: 1 / span 2; justify-self: start; }
+  .reference-marketplace-home .reference-market-header .reference-brand-lockup img { width: 126px; height: 32px; }
+  .reference-marketplace-home .reference-market-header .reference-brand-lockup strong { font-size: 13px !important; letter-spacing: 0; }
+  .reference-marketplace-home .reference-market-header .reference-brand small { font-size: 10px; text-align: center; padding: 4px 0 8px; }
+  .reference-marketplace-home .reference-market-heart { grid-column: 2; grid-row: 1; min-width: 44px; min-height: 44px; }
+  .reference-marketplace-home .discovery-header-actions { grid-column: 3; grid-row: 1; }
+  .reference-marketplace-home .reference-market-header .discovery-account { display: none; }
+  .reference-marketplace-home .reference-market-header .discovery-icon-button { min-width: 44px; min-height: 44px; }
+  .reference-marketplace-home .reference-market-location { grid-column: 2 / 4; grid-row: 2; min-height: 44px; max-width: 100%; gap: 4px; }
+  .reference-marketplace-home .reference-market-location select { font-size: 13px; min-height: 44px; max-width: 100px; padding: 0; }
+  .reference-marketplace-home .reference-market-search { height: 48px; padding: 0 12px; gap: 8px; margin: 8px 0 18px; }
+  .reference-marketplace-home .reference-market-search input { font-size: 16px; }
+  .reference-marketplace-home .reference-market-search > a { width: 44px; height: 44px; flex-shrink: 0; }
+  .reference-marketplace-home .reference-market-hero { background: #edf6fc !important; min-height: 0; padding: 24px 20px; border-radius: 16px; color: #10182b; }
+  .reference-marketplace-home .reference-market-hero-copy { width: 100%; }
+  .reference-marketplace-home .reference-market-hero h1 { font-size: 29px; line-height: 1.15; letter-spacing: -.8px; color: #10182b; }
+  .reference-marketplace-home .reference-market-hero-copy h1 span { color: #10182b !important; }
+  .reference-marketplace-home .reference-market-hero p { font-size: 14px; line-height: 1.5; margin: 12px 0 18px; color: var(--market-muted); }
+  .reference-marketplace-home .reference-market-hero-copy > a { font-size: 14px; min-height: 44px; padding: 10px 18px; }
+  .reference-marketplace-home .reference-market-hero-person,
+  .reference-marketplace-home .reference-market-benefits { display: none; }
+  .reference-marketplace-home .reference-hero-dots { height: 32px; }
+  .reference-marketplace-home .reference-hero-dots button { min-width: 44px; min-height: 32px; }
+  .reference-marketplace-home .reference-market-categories {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    margin: 8px 0 20px;
+    padding: 4px 0 8px;
+  }
+  .reference-marketplace-home .reference-market-categories a { flex: 0 0 72px; min-height: 72px; gap: 8px; font-size: 12px; }
+  .reference-marketplace-home .reference-market-categories a > span { width: 44px; height: 44px; border-radius: 12px; }
+  .reference-marketplace-home .reference-market-categories strong { font-size: 12px; white-space: nowrap; }
+  .reference-marketplace-home .reference-market-categories svg { width: 24px; height: 24px; }
+  .reference-marketplace-home .reference-market-card-grid,
+  .reference-marketplace-home .reference-market-business-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .reference-marketplace-home .reference-market-card,
+  .reference-marketplace-home .reference-market-business { border-radius: 12px; }
+  .reference-marketplace-home .reference-market-card-copy { padding: 10px; }
+  .reference-marketplace-home .reference-market-section-head { gap: 10px; margin: 24px 0 12px; }
+  .reference-marketplace-home .reference-market-section-head h2 { font-size: 21px; line-height: 1.25; }
+  .reference-marketplace-home .reference-market-skeleton { height: 260px; }
+  .reference-marketplace-home .reference-market-business :is(img, svg.reference-photo, .reference-photo-fallback) { height: 110px; }
+  .reference-marketplace-home .reference-business-tags { gap: 6px; }
+  .reference-marketplace-home .reference-market-filters label { font-size: 13px; }
+  .reference-marketplace-home .reference-market-filters select { font-size: 16px; min-height: 44px; }
+  .reference-marketplace-home .reference-bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: #fff;
+    border-top: 1px solid #dce5ef;
+    padding: 8px 7px calc(8px + env(safe-area-inset-bottom, 0px));
+    color: var(--market-muted);
+  }
+  .reference-marketplace-home .reference-bottom-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 44px;
+    font-size: 11px;
+    line-height: 1.1;
+    border-radius: 8px;
+  }
+  .reference-marketplace-home .reference-bottom-nav a.is-active { color: var(--market-link); font-weight: 600; }
+}

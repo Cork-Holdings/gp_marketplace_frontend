@@ -5,6 +5,7 @@ import { usePermissions } from '@/lib/context/permissions';
 import { hasAnyRole, hasPermission as checkPermission } from '@/lib/permissions';
 import type { AccountType } from '@/types/auth';
 import { Skeleton } from '@/components/common/Skeleton';
+import {adminEquivalentPath} from '@/lib/adminWorkspace';
 
 export interface ProtectedRouteProps {
   children: ReactNode;
@@ -31,6 +32,8 @@ export function ProtectedRoute({ children, roles = [], permission, anyPermission
   }
 
   if (roles.length > 0 && !hasAnyRole(hasRole, roles)) {
+    const adminPath=hasRole('system_admin')?adminEquivalentPath(location.pathname):undefined;
+    if(adminPath) return <Navigate to={adminPath} replace />;
     return <Navigate to="/portal" replace />;
   }
 

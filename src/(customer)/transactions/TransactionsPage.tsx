@@ -1,4 +1,4 @@
-import { Link, Navigate } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/lib/context/useAuth';
 import { usePaymentMode } from '@/hooks/usePaymentMode';
 import { useFetchWrapper } from '@/hooks/useFetchWrapper';
@@ -10,8 +10,14 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 import { DEFAULT_LOCALE } from '@/lib/locale';
 import { PAYMENT_METHOD_LABELS, TRANSACTION_TYPE_LABELS, type CustomerPurchaseHistory, type Transaction } from '@/types/transaction';
 import type { Store } from '@/types/store';
+import { PaymentReceipts } from '@/components/payments/PaymentReceipts';
+import type { PaymentReceipt } from '@/lib/paymentReceipts';
 
 export default function TransactionsPage() {
+  const [params]=useSearchParams();
+  const kind=params.get('receipt_kind');
+  const source=params.get('receipt_source')??'';
+  const receiptKind=kind&&['quote','reservation','custom_order'].includes(kind)&&/^[a-f\d]{8}(-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(source)?kind as PaymentReceipt['kind']:undefined;
   const simulated = usePaymentMode();
   const { hasRole, isAuthenticated } = useAuth();
   const customer = hasRole('customer');
@@ -27,7 +33,9 @@ export default function TransactionsPage() {
 
   return <main className="workflow-page">
     <header className="workflow-header"><p className="workflow-eyebrow">Your account</p><h1>Payments</h1><p>Review money paid, refunds, and adjustments for your purchases.</p></header>
-    {simulated && <Link to="/account/settlements" className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-cream-dark bg-sage/20 p-4 text-sm font-semibold text-forest">View simulated payments for all workflows<span aria-hidden="true">→</span></Link>}
+    <Link to="/account/settlements" className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-cream-dark bg-sage/20 p-4 text-sm font-semibold text-forest">{simulated?'View simulated payments for all workflows':'View quoted-service payment protection and settlements'}<span aria-hidden="true">→</span></Link>
+    {receiptKind&&<Link to="/account/transactions#payment-receipts" className="workflow-back-link">All receipts</Link>}
+    <PaymentReceipts key={`${receiptKind??'all'}:${source}`} kind={receiptKind} sourceId={receiptKind?source:undefined}/>
     {loading ? <TableSkeleton rows={5} cols={4} /> : error ? <ErrorState error={error} onRetry={retry} /> : <section className="workflow-panel" aria-labelledby="payments-heading">
       <div className="workflow-panel-heading"><h2 id="payments-heading">Payment activity</h2><p>Open a payment to see the reference and receipt details.</p></div>
       {transactions.length ? <ul className="customer-activity-list">{transactions.map(transaction => <li key={transaction.id} className="customer-activity-row">

@@ -1,7 +1,7 @@
 /* ─────────────────────────────────────────────────────────────────────────────
    GEEPAY MARKETPLACE — index.css
    Brand tokens, premium surface utilities, and marketplace-specific chrome.
-   Primary CTAs are flat cobalt — no button gradients.
+   Operational CTAs stay flat; selected brand-entry actions opt into gradients.
 ───────────────────────────────────────────────────────────────────────────── */
 
 @tailwind base;
@@ -32,9 +32,12 @@
   --color-navy: #10182B;
   --color-navy-dark: #0C1220;
 
-  /* Brand gradient — charts, text fills, seams. Never on primary buttons. */
+  /* Decorative brand gradient. Action gradients below have a contrast scrim. */
   --gradient-brand: linear-gradient(135deg, #257DC1 0%, #2b6fc2 50%, #30C5F4 100%);
   --cta-gradient: var(--gradient-brand);
+  --brand-action-gradient: linear-gradient(115deg, var(--gp-steel) 0%, var(--gp-sky) 100%);
+  --brand-action-scrim: linear-gradient(rgba(16, 24, 43, 0.44), rgba(16, 24, 43, 0.44));
+  --brand-action-hover-scrim: linear-gradient(rgba(16, 24, 43, 0.50), rgba(16, 24, 43, 0.50));
 
   /* Flat primary CTA */
   --btn-primary: #1C639A;
@@ -447,7 +450,7 @@
     radial-gradient(ellipse 50% 40% at 20% 80%, rgba(37, 125, 193, 0.55) 0%, transparent 60%);
 }
 
-/* Flat primary auth / onboarding CTA — no gradient.
+/* Flat default for auth / onboarding; selected brand-entry actions opt in below.
    Explicitly override Tailwind button preflight (transparent bg). */
 .auth-sign-in-btn {
   background-color: #257DC1;
@@ -459,6 +462,39 @@
 .auth-sign-in-btn:hover:not(:disabled) {
   background-color: #1C639A;
   background-image: none;
+}
+
+/* Opt-in brand moments only. Payment, settlement and destructive actions remain flat. */
+.reference-market-hero-copy > .gp-brand-cta,
+.reference-store-hero .gp-brand-cta,
+.reference-dashboard .reference-quick-action.is-primary.gp-brand-cta,
+.auth-sign-in-btn.gp-brand-cta:not(:disabled) {
+  background-color: var(--btn-primary);
+  background-image: var(--brand-action-scrim), var(--brand-action-gradient);
+  color: #FFFFFF;
+  border-radius: 12px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--btn-primary-shadow);
+  touch-action: manipulation;
+}
+.reference-market-hero-copy > .gp-brand-cta:is(:hover, :focus-visible),
+.reference-store-hero .gp-brand-cta:is(:hover, :focus-visible),
+.reference-dashboard .reference-quick-action.is-primary.gp-brand-cta:is(:hover, :focus-visible),
+.auth-sign-in-btn.gp-brand-cta:is(:hover, :focus-visible):not(:disabled) {
+  background-image: var(--brand-action-hover-scrim), var(--brand-action-gradient);
+  color: #FFFFFF;
+}
+.gp-brand-cta:focus-visible {
+  outline: 3px solid var(--gp-sky);
+  outline-offset: 3px;
+}
+.reference-dashboard .reference-quick-action.is-primary.gp-brand-cta > .reference-icon {
+  color: currentColor;
+}
+@media (forced-colors: active) {
+  .gp-brand-cta { forced-color-adjust: auto; border: 1px solid ButtonText; }
 }
 
 .chart-bar-striped {

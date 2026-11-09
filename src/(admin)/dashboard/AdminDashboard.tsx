@@ -1,3 +1,4 @@
+import { PaginatedTable } from '@/components/common/PaginatedTable';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminApi } from '@/lib/api/services';
@@ -269,7 +270,7 @@ function RecentActivitiesTable({ activities }) {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[540px] text-left text-sm">
+        <PaginatedTable className="w-full min-w-[540px] text-left text-sm">
           <thead>
             <tr className="border-b border-cream-dark text-[11px] font-medium uppercase tracking-wide text-forest-muted">
               <th className="pb-3 pr-3">Order ID</th>
@@ -308,7 +309,7 @@ function RecentActivitiesTable({ activities }) {
               ))
             )}
           </tbody>
-        </table>
+        </PaginatedTable>
       </div>
     </div>
   );

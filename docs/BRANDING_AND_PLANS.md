@@ -2,6 +2,8 @@
 
 The supplied guide is the authority: Prussian Blue `#10182B`, Steel Blue `#257DC1`, Sky Aqua `#30C5F4`, Amber Gold `#FBBF24`, and white. The supplied GeePay wordmark is used without cropping, recoloring or distortion. DM Sans and Inter remain the interface fonts.
 
+DM Sans owns headlines and product/business names; Inter supports detailed interface copy. Selected brand-entry actions may opt into `gp-brand-cta`: marketplace/storefront hero links, Sign in, and the dashboard's primary quick action. The steel-to-aqua gradient has a navy contrast scrim for white labels, with darker hover/focus and a flat disabled fallback. Payment, settlement, destructive, secondary and routine table actions do not opt in. See `BRAND_UI_REVIEW_2026_10_21.md` for measured gaps and proposed follow-up work.
+
 ## Where to manage
 
 - Admin → Subscription plans: `/portal/admin/plans`
