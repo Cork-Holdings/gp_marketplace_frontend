@@ -16,6 +16,7 @@ import CheckoutPage from '@/(public)/checkout/CheckoutPage';
 import OrderTrackingPage from '@/(public)/orders/OrderTrackingPage';
 import QRLandingPage from '@/(public)/qr/QRLandingPage';
 import PortalLoginPage from '@/(public)/login/PortalLoginPage';
+import PasswordRecoveryPage from '@/(public)/login/PasswordRecoveryPage';
 import PortalHomePage from './components/portal/PortalHomePage';
 import MerchantSelfRegisterPage from '@/(public)/register/MerchantSelfRegisterPage';
 import CustomerRegisterPage from '@/(public)/register/CustomerRegisterPage';
@@ -109,6 +110,8 @@ export default function App() {
 
       <Route path="/login" element={<PortalLoginPage />} />
       <Route path="/portal/login" element={<PortalLoginPage />} />
+      <Route path="/forgot-password" element={<PasswordRecoveryPage key="request" mode="request" />} />
+      <Route path="/reset-password" element={<PasswordRecoveryPage key="reset" mode="reset" />} />
       <Route path="/register/merchant" element={<MerchantSelfRegisterPage />} />
       <Route path="/register/customer" element={<CustomerRegisterPage />} />
 

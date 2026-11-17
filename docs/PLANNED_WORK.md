@@ -6,6 +6,10 @@ ERP navigation uses the shared sidebar and mobile menu, filtered by active plan,
 
 The current Basic ERP UAT guide describes delivered behaviour. Admin oversight is read-only. Paid plan billing, automatic tax and automatic marketplace posting are not implied by available plan flags.
 
+## Account access
+
+Customer records include password-reset and reversible access controls for administrators with `admin.manage`. Email-based accounts can request a reset from the login page once SMTP and the frontend reset origin are configured. Release verification includes a reset through the configured mailbox and an access change on a disposable account.
+
 ## Sales & service operations — owner
 
 ### Integrated sales controls

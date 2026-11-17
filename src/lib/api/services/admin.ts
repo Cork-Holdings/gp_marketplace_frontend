@@ -2,6 +2,10 @@ import secureApi from '../crud';
 import { getRoute, withQuery } from '../end_points';
 
 export const AdminService = {
+  sendCustomerReset: (customerId: string) =>
+    secureApi.post(getRoute('ADMIN_CUSTOMER_PASSWORD_RESET', { customerId })),
+  setCustomerAccess: (customerId: string, is_active: boolean): Promise<{ is_active: boolean }> =>
+    secureApi.patch(getRoute('ADMIN_CUSTOMER_ACCESS', { customerId }), { is_active }),
   createPlatformAdmin: (payload: unknown) => secureApi.post(getRoute('CREATE_PLATFORM_ADMIN'), payload),
   createStore: (payload: unknown) => secureApi.post(getRoute('ADMIN_CREATE_STORE'), payload),
   listStores: () => secureApi.get(getRoute('ADMIN_LIST_STORES')),

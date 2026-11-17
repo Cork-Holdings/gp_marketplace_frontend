@@ -6,6 +6,8 @@
 export const API = {
   // Auth
   LOGIN: '/auth/login',
+  FORGOT_PASSWORD: '/auth/forgot-password',
+  RESET_PASSWORD: '/auth/reset-password',
   REGISTER: '/auth/register',
   REGISTER_CUSTOMER: '/auth/register/customer',
   REGISTER_MERCHANT: '/auth/register/merchant',
@@ -26,6 +28,8 @@ export const API = {
 
   // Admin
   CREATE_PLATFORM_ADMIN: '/admin/admins',
+  ADMIN_CUSTOMER_ACCESS: '/admin/customers/:customerId/access',
+  ADMIN_CUSTOMER_PASSWORD_RESET: '/admin/customers/:customerId/password-reset',
   ADMIN_CREATE_STORE: '/admin/stores',
   ADMIN_LIST_STORES: '/admin/stores',
   ADMIN_REGISTER_MERCHANT: '/admin/merchants',

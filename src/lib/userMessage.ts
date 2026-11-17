@@ -134,6 +134,9 @@ export function errorMessage(message: unknown, context: ErrorContext = {}): stri
   if (code === 'NETWORK_ERROR' || /failed to fetch|network error|networkerror/.test(text)) {
     return payment && method !== 'GET' ? PAYMENT_CHECK : 'We could not connect to GeePay. Check your connection, then refresh the details before trying again.';
   }
+  if (code === 'PASSWORD_RESET_UNAVAILABLE') return 'Password reset email is temporarily unavailable. Try again later or contact support.';
+  if (code === 'PASSWORD_RESET_BUSY') return 'A reset link may already have been requested. Wait a minute before trying again.';
+  if (code === 'PASSWORD_RESET_INVALID') return 'This password reset link is invalid or has expired. Request a new link.';
   // Never expose HTML, stack traces or storage/provider diagnostics on server failures.
   if (status >= 500) {
     if (/collection is not enabled/.test(text)) return 'Online payment is unavailable right now. Please try later or contact the business to discuss payment options.';

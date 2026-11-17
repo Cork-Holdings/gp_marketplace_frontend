@@ -186,6 +186,13 @@ export default function PortalLoginPage() {
                 autoComplete="current-password"
                 className="w-full rounded-xl border border-cream-dark bg-white px-4 py-3 text-sm text-charcoal placeholder:text-gray-400 focus:border-forest/40 focus:outline-none focus:ring-2 focus:ring-forest/15"
               />
+              <Link
+                to="/forgot-password"
+                state={{ email }}
+                className="inline-flex min-h-11 items-center text-sm font-medium text-forest underline underline-offset-4"
+              >
+                Forgot password?
+              </Link>
                 </>
               ) : (
                 <>

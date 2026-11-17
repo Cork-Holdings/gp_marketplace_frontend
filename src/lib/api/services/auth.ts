@@ -5,6 +5,11 @@ export const AuthService = {
   login: (email: string, password: string) =>
     secureApi.post(getRoute('LOGIN'), { email, password }, { auth: false }),
 
+  requestPasswordReset: (email: string) =>
+    secureApi.post(getRoute('FORGOT_PASSWORD'), { email }, { auth: false }),
+  resetPassword: (token: string, password: string) =>
+    secureApi.post(getRoute('RESET_PASSWORD'), { token, password }, { auth: false }),
+
   employeeLogin: (payload: {
     merchant_id?: string;
     store_id?: string;

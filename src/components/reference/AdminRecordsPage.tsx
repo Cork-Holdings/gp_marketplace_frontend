@@ -5,6 +5,7 @@ import { usePermissions } from "@/lib/context/permissions";
 import { RecordListTable } from "@/components/common/RecordListTable";
 import { ErrorState } from "@/components/common/ErrorState";
 import { ReferencePanel } from "./ReferenceUI";
+import { AdminCustomerActions } from "./AdminCustomerActions";
 import {
   adminViews,
   adminDisplayValue,
@@ -411,6 +412,22 @@ export default function AdminRecordsPage({
                   </div>
                 ))}
             </dl>
+            {kind === "customers" && hasPermission("admin.manage") && typeof selected.id === "string" && typeof selected.email === "string" && typeof selected.is_active === "boolean" && (
+              <AdminCustomerActions
+                key={selected.id}
+                id={selected.id}
+                email={selected.email}
+                active={selected.is_active}
+                onStatusChange={(is_active) => {
+                  const id = selected.id;
+                  setSelected((record) => record?.id === id ? { ...record, is_active } : record);
+                  setState((result) => ({
+                    ...result,
+                    items: result.items?.map((row) => row.id === id ? { ...row, is_active } : row),
+                  }));
+                }}
+              />
+            )}
             {Array.isArray(selected.lines) && (
               <>
                 <h3>Lines</h3>
