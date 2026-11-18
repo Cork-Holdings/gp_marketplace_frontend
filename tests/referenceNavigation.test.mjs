@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ownerReferenceMenu,adminReferenceMenu,marketplaceReferenceCategories,groupReferenceMenu,referenceActive,featurePath } from '../src/lib/referenceNavigation.ts';
-import { categoryPaths,cartQuantity,mobileAccountPaths } from '../src/lib/referenceMarketplace.ts';
+import { categoryPaths,cartQuantity,mobileAccountPaths,searchMarketplaceStores } from '../src/lib/referenceMarketplace.ts';
 
 test('owner navigation preserves every current work and setup route while adding all reference sections',()=>{
   const required=['Orders','Bookings','Products & Services','Inventory','Sales & POS','Customers (CRM)','Marketing','Accounting','Employees (HR)','Analytics','Website','Business Services','Financing','Settings','Subscription Plan'];
@@ -47,4 +47,19 @@ test('mobile bottom navigation uses each account’s own order and store destina
   assert.equal(mobileAccountPaths('customer').orders,'/account/ledger');
   assert.equal(mobileAccountPaths('guest').account,'/login');
   assert.equal(mobileAccountPaths('customer').store,'/register/merchant');
+});
+
+test('store search ranks exact names and supports partial, reordered and mistyped words', () => {
+  const stores = [
+    { name: 'Haus of Bertha Café', branch_name: 'Woodlands' },
+    { name: 'Haus of Bertha', branch_name: 'Show Grounds' },
+    { name: 'Bertha Groceries' },
+  ];
+  for (const query of ['  HAUS   OF BERTHA ', 'brtha hause', 'huas berhta', 'berth haus']) {
+    assert.deepEqual(searchMarketplaceStores(stores, query).map(store => store.name).sort(), ['Haus of Bertha', 'Haus of Bertha Café']);
+  }
+  assert.equal(searchMarketplaceStores(stores, 'Haus of Bertha')[0], stores[1]);
+  assert.deepEqual(searchMarketplaceStores(stores, 'cafe woodlands'), [stores[0]]);
+  assert.deepEqual(searchMarketplaceStores(stores, 'haus unrelated'), []);
+  assert.deepEqual(searchMarketplaceStores(stores, ' '), []);
 });

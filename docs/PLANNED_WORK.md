@@ -335,6 +335,8 @@ After a feature is completed, update this backlog and the UAT guide, enable the 
 
 ## Public discovery backlog
 
+Marketplace search displays matching published businesses independently of their offerings. Check exact, partial, reordered and mistyped store names, including a published business without offerings. Stores awaiting verification remain visible through the owner's Stores & branches page.
+
 - [ ] Saved items / favourites with real per-user persistence.
 - [ ] Product and business scan-to-search.
 - [ ] Discount, arrival and clearance collections backed by eligibility and price rules. Active admin-published marketplace highlights remain available.
