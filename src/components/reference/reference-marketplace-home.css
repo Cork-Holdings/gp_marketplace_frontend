@@ -77,8 +77,24 @@
 }
 .reference-marketplace-home .reference-market-business h3 { font-size: 15px; line-height: 1.35; padding: 12px 12px 0; }
 .reference-marketplace-home .reference-market-business p { font-size: 12px; margin: 8px 12px; color: var(--market-muted); }
-.reference-marketplace-home .reference-business-tags { font-size: 12px; margin: 8px 12px 0; }
-.reference-marketplace-home .reference-business-tags a { min-height: 44px; display: inline-flex; align-items: center; }
+.reference-marketplace-home .reference-business-tags {
+  align-items: center;
+  font-size: 12px;
+  margin: 8px 12px 0;
+}
+.reference-marketplace-home .reference-business-tags > span { color: var(--market-muted); }
+.reference-marketplace-home .reference-business-tags > a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px;
+  color: var(--market-link);
+  font-weight: 600;
+}
+.reference-marketplace-home .reference-business-tags > a:is(:hover, :focus-visible) {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .reference-marketplace-home .reference-market-upcoming { margin-top: 32px; color: var(--market-muted); }
 .reference-marketplace-home .reference-market-upcoming summary {
   padding: 12px 0;
