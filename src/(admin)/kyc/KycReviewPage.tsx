@@ -2,6 +2,7 @@ import { useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { adminApi } from '@/lib/api/services';
 import { useAsync } from '@/hooks/useAsync';
+import { notifyActivityChanged } from '@/hooks/useActivityCounts';
 import { Button } from '@/components/ui/button';
 import { ErrorState } from '@/components/common/ErrorState';
 import { TableSkeleton } from '@/components/common/Skeleton';
@@ -41,6 +42,7 @@ function Fields({ items }: { items: [string, ReactNode][] }) {
 
 function Document({ doc, initiallyOpen }: { doc: ReviewDocument; initiallyOpen: boolean }) {
   const url = kycDocumentUrl(doc.file_url, import.meta.env.VITE_API_BASE_URL);
+  const [failedPreview, setFailedPreview] = useState<string | null>(null);
   const image = doc.content_type?.startsWith('image/') || /\.(png|jpe?g|gif|webp)(\?|$)/i.test(url || '');
   const pdf = doc.content_type === 'application/pdf' || /\.pdf(\?|$)/i.test(doc.file_name || url || '');
   return <div className="min-w-0 border-b border-border pb-6 last:border-0">
@@ -55,7 +57,11 @@ function Document({ doc, initiallyOpen }: { doc: ReviewDocument; initiallyOpen: 
     {url ? <>
       {(image || pdf) && <details open={initiallyOpen} className="mt-4">
         <summary className="cursor-pointer rounded-lg py-3 text-sm font-medium text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">Document preview</summary>
-        {image ? <img src={url} alt={`${doc.title}: ${doc.file_name || 'submitted document'}`} loading="lazy" className="mt-2 max-h-[36rem] w-full rounded-xl border border-border bg-muted object-contain" />
+        {image && failedPreview === url
+          ? <p role="status" className="mt-2 rounded-xl border border-border bg-muted p-3 text-sm text-muted-foreground">
+              This image could not be loaded. Verify you have a readable copy before making a decision.
+            </p>
+          : image ? <img src={url} onError={() => setFailedPreview(url)} alt={`${doc.title}: ${doc.file_name || 'submitted document'}`} loading="lazy" className="mt-2 max-h-[36rem] w-full rounded-xl border border-border bg-muted object-contain" />
           : <iframe src={url} title={`${doc.title} document preview`} loading="lazy" className="mt-2 h-[32rem] w-full rounded-xl border border-border bg-muted" />}
       </details>}
       <a href={url} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">Open full document <span className="text-xs font-normal">(new tab)</span><WorkflowIcon name="arrowRight" /></a>
@@ -97,6 +103,7 @@ export function KycReviewPage({ verificationId, onBack }: { verificationId: stri
     try {
       const result = await (decision ? adminApi.approveKyc : adminApi.rejectKyc)(verificationId, { review_notes: notes.trim() || undefined });
       setSavedReview(result?.verification || result);
+      notifyActivityChanged();
       showToast(decision ? 'Verification check approved.' : 'Verification check rejected.');
       setDecision(null);
       // Keep the full record open after a decision. Reload related checks and visibility.

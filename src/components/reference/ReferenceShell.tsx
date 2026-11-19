@@ -22,6 +22,15 @@ type Props = {
     store?: Store;
     onStoreChange?: (id: string) => void;
 };
+function PendingKycBadge({ count }: { count?: number }) {
+    if (!count) return null;
+    const description = count === 1 ? '1 KYC review pending' : `${count} KYC reviews pending`;
+    return <span className="reference-count reference-approval-count" title={description}>
+        <span aria-hidden="true">{count > 99 ? '99+' : count}</span>
+        <span className="sr-only">{description}</span>
+    </span>;
+}
+
 export function ReferenceShell({ role, items, counts, stores = [], store, onStoreChange }: Props) {
     const { user, logout } = useAuth();
     const {hasPermission}=usePermissions();
@@ -42,13 +51,19 @@ export function ReferenceShell({ role, items, counts, stores = [], store, onStor
     const nav = <nav className="reference-menu" aria-label={`${role} sections`}>{groupReferenceMenu(workingItems).map(group => {
       const links = group.items.map(item => {
                 const count = item.countKey ? counts[item.countKey] : undefined;
-                return <Link key={item.to} to={item.to} className={`reference-menu-link${item.to===activeTo ? ' is-active' : ''}`} aria-current={item.to===activeTo ? 'page' : undefined} onClick={() => setOpen(false)}><ReferenceIcon name={item.icon}/><span>{item.label}</span>{count !== undefined && count > 0 ? <span className="reference-count" aria-label={`${count} total, not unread notifications`}>{count > 99 ? '99+' : count}</span> : null}</Link>;
+                const badge = item.countKey === 'pendingKyc'
+                    ? <PendingKycBadge count={count} />
+                    : count !== undefined && count > 0
+                        ? <span className="reference-count" aria-label={count + ' total, not unread notifications'}>{count > 99 ? '99+' : count}</span>
+                        : null;
+                return <Link key={item.to} to={item.to} className={`reference-menu-link${item.to===activeTo ? ' is-active' : ''}`} aria-current={item.to===activeTo ? 'page' : undefined} onClick={() => setOpen(false)}><ReferenceIcon name={item.icon}/><span>{item.label}</span>{badge}</Link>;
             });
       if (!group.to) return <section className="reference-menu-group" key={group.label || 'overview'} aria-label={group.label || 'Overview'}>{group.label && <h2>{group.label}</h2>}{links}</section>;
       const activeModule = moduleForPath(location.pathname);
       const active = group.to.endsWith(`/${activeModule?.id}`)||location.pathname===root&&group.to.endsWith('/sales');
+      const pendingKyc = group.items.some(item => item.countKey === 'pendingKyc') ? counts.pendingKyc : undefined;
       return <details key={`${group.to}:${active}`} className="reference-module-nav" open={active}>
-        <summary><span>{group.label}</span><ReferenceIcon name="chevron" size={16}/></summary>
+        <summary><span>{group.label}</span><PendingKycBadge count={pendingKyc} /><ReferenceIcon name="chevron" size={16}/></summary>
         {links}<Link className={`reference-menu-link reference-module-overview${location.pathname === group.to ? ' is-active' : ''}`} to={group.to} aria-current={location.pathname === group.to ? 'page' : undefined} onClick={() => setOpen(false)}><ReferenceIcon name="layers" size={16}/><span>Module overview</span></Link>
       </details>;
     })}</nav>;

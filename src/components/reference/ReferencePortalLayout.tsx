@@ -17,7 +17,7 @@ export function ReferencePortalLayout() {
   const {permissions}=usePermissions();
   const {data:plan}=usePlan();
   const {isFood}=useMarketplaceCapabilities(selectedStore);
-  const counts=useActivityCounts('owner',isMerchant?selectedStoreId??undefined:undefined);
+  const counts=useActivityCounts(isAdmin?'admin':'owner',isMerchant?selectedStoreId??undefined:undefined);
   const simulated=usePaymentMode();
   const items=isAdmin?adminReferenceMenu.filter(item=>canAccessNav(permissions,item.to)):ownerReferenceMenu.filter(item=>{
     const feature=planFeatureForPath(item.to);

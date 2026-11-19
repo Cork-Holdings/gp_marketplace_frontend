@@ -8,7 +8,7 @@ export type ReferenceMenuItem = {
   group: string;
   comingSoon?: boolean;
   foodOnly?: boolean;
-  countKey?: 'quotes' | 'jobs' | 'bookings' | 'custom';
+  countKey?: 'quotes' | 'jobs' | 'bookings' | 'custom' | 'pendingKyc';
 };
 
 export function featurePath(role: ReferenceRole, feature: string) {
@@ -72,7 +72,7 @@ export const adminReferenceMenu: ReferenceMenuItem[] = [
   {label:'Business ERP oversight',to:'/portal/admin/erp',icon:'layers',group:'Money'},
   future('admin', 'Commissions & Revenue', 'revenue', 'coins', 'Money'),
   future('admin', 'Reviews & Disputes', 'disputes', 'message', 'Trust & support'),
-  { label: 'KYC Review', to: '/portal/admin/kyc', icon: 'shield', group: 'Trust & support' },
+  { label: 'KYC Review', to: '/portal/admin/kyc', icon: 'shield', group: 'Trust & support', countKey: 'pendingKyc' },
   future('admin', 'Risk & Compliance', 'risk', 'shield', 'Trust & support'),
   future('admin', 'Analytics & Reports', 'analytics', 'chart', 'Intelligence'),
   future('admin', 'Geographic Analytics', 'geographic', 'globe', 'Intelligence'),
